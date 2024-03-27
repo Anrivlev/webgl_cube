@@ -10,8 +10,8 @@ export class WebglScene {
     canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
     private camera: CameraInfo = {
-      position: new Float32Array([0.0, 0.0, 2.5]),
-      front: new Float32Array([0.0, 0.0, -1.0]),
+      position: new Float32Array([0.0, 0.0, -1.3]),
+      front: new Float32Array([0.0, 0.0, 1.0]),
       up: new Float32Array([0.0, 1.0, 0.0]),
       zoom: 1.0,
     }
@@ -41,21 +41,21 @@ export class WebglScene {
 
   public drawCube(): void {
     const bufferData = new Float32Array([
-      -0.5, -0.5, -0.5, 0.2, 0.2, 0.2,
+      -0.5, -0.5, -0.5, 0.2, 0.2, 0.2, 0.0, 0.0,
       //
-      -0.5, -0.5, 0.5, 0.2, 0.2, 0.8,
+      -0.5, -0.5, 0.5, 0.2, 0.2, 0.8, 0.0, 1.0,
       //
-      -0.5, 0.5, -0.5, 0.2, 0.8, 0.2,
+      -0.5, 0.5, -0.5, 0.2, 0.8, 0.2, 1.0, 0.0,
       //
-      -0.5, 0.5, 0.5, 0.2, 0.8, 0.8,
+      -0.5, 0.5, 0.5, 0.2, 0.8, 0.8, 1.0, 1.0,
       //
-      0.5, -0.5, -0.5, 0.8, 0.2, 0.2,
+      0.5, -0.5, -0.5, 0.8, 0.2, 0.2, 0.0, 1.0,
       //
-      0.5, -0.5, 0.5, 0.8, 0.2, 0.8,
+      0.5, -0.5, 0.5, 0.8, 0.2, 0.8, 0.0, 0.0,
       //
-      0.5, 0.5, -0.5, 0.8, 0.8, 0.2,
+      0.5, 0.5, -0.5, 0.8, 0.8, 0.2, 1.0, 1.0,
       //
-      0.5, 0.5, 0.5, 0.8, 0.8, 0.8,
+      0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 1.0, 0.0,
       //
     ]);
 
@@ -85,45 +85,55 @@ export class WebglScene {
       //
       2, 4, 6,
     ]);
-    const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 7;
+
+    // const pixels = new Uint8Array()
+
+    const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 8;
     const FLOAT_SIZE = 4;
 
-    const pointPositionLoc = this.gl.getAttribLocation(this.program, 'aPosition');
-    const pointColorLoc = this.gl.getAttribLocation(this.program, 'aColor');
+    const positionLoc = this.gl.getAttribLocation(this.program, 'aPosition');
+    const colorLoc = this.gl.getAttribLocation(this.program, 'aColor');
+    const texCoordLoc = this.gl.getAttribLocation(this.program, 'aTexCoord');
     const WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
     const WVPm: mat4 = mat4.mul(
       mat4.create(),
       mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
-      mat4.fromRotation(mat4.create(), 0.0, new Float32Array([0.0, 1.0, 0.0]))
+      mat4.fromRotation(mat4.create(), 0.8, new Float32Array([0.0, 1.0, 0.0]))
     );
     this.gl.uniformMatrix4fv(WVPLoc, false, WVPm, 0, 0);
-    this.gl.enableVertexAttribArray(pointPositionLoc);
-    this.gl.enableVertexAttribArray(pointColorLoc);
 
     const buffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, bufferData, this.gl.STATIC_DRAW);
 
+    this.gl.enableVertexAttribArray(positionLoc);
+    this.gl.enableVertexAttribArray(colorLoc);
+    this.gl.enableVertexAttribArray(texCoordLoc);
+    this.gl.vertexAttribPointer(positionLoc, 3, this.gl.FLOAT, false, BUFFER_DATA_SINGLE_ELEMENT_SIZE * FLOAT_SIZE, 0);
     this.gl.vertexAttribPointer(
-      pointPositionLoc,
-      3,
-      this.gl.FLOAT,
-      false,
-      BUFFER_DATA_SINGLE_ELEMENT_SIZE * FLOAT_SIZE,
-      0
-    );
-    this.gl.vertexAttribPointer(
-      pointColorLoc,
+      colorLoc,
       3,
       this.gl.FLOAT,
       false,
       BUFFER_DATA_SINGLE_ELEMENT_SIZE * FLOAT_SIZE,
       3 * FLOAT_SIZE
     );
+    this.gl.vertexAttribPointer(
+      texCoordLoc,
+      2,
+      this.gl.FLOAT,
+      false,
+      BUFFER_DATA_SINGLE_ELEMENT_SIZE * FLOAT_SIZE,
+      6 * FLOAT_SIZE
+    );
 
     const indicesBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
+
+    // const texture = this.gl.createTexture();
+    // this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    // this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, 4, 4, 0, this.gl.UNSIGNED_BYTE, pixels);
 
     // this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
     this.gl.enable(this.gl.DEPTH_TEST);
