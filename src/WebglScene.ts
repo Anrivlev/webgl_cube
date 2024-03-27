@@ -1,15 +1,18 @@
 import { mat4, vec3 } from 'gl-matrix';
 import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
+import imageUrl from './resources/cube-texture.jpg';
 
 export class WebglScene {
   private gl: WebGL2RenderingContext;
   private program: WebGLProgram;
+  private FLOAT_SIZE = 4;
+  private bufferData: Float32Array;
+  private indicesBufferData: Uint8Array;
 
   constructor(
     canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
-    private image: Uint8Array,
     private camera: CameraInfo = {
       position: new Float32Array([0.0, 0.0, -1.3]),
       front: new Float32Array([0.0, 0.0, 1.0]),
@@ -17,6 +20,8 @@ export class WebglScene {
       zoom: 1.0,
     }
   ) {
+    this.bufferData = new Float32Array();
+    this.indicesBufferData = new Uint8Array();
     const gl = canvas.getContext('webgl2');
     if (!gl) throw new Error(`Не удалось создать контекст`);
     this.gl = gl;
@@ -38,6 +43,14 @@ export class WebglScene {
   public linkAndUseProgram(): void {
     this.gl.linkProgram(this.program);
     this.gl.useProgram(this.program);
+  }
+
+  public loadTextures(): void {
+
+  }
+
+  public addCube(x:number, y: number, z:number) {
+
   }
 
   public drawCube(): void {
@@ -87,10 +100,7 @@ export class WebglScene {
       2, 4, 6,
     ]);
 
-    const pixels = new Uint8Array();
-
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 8;
-    const FLOAT_SIZE = 4;
 
     const positionLoc = this.gl.getAttribLocation(this.program, 'aPosition');
     const colorLoc = this.gl.getAttribLocation(this.program, 'aColor');
@@ -110,36 +120,42 @@ export class WebglScene {
     this.gl.enableVertexAttribArray(positionLoc);
     this.gl.enableVertexAttribArray(colorLoc);
     this.gl.enableVertexAttribArray(texCoordLoc);
-    this.gl.vertexAttribPointer(positionLoc, 3, this.gl.FLOAT, false, BUFFER_DATA_SINGLE_ELEMENT_SIZE * FLOAT_SIZE, 0);
+    this.gl.vertexAttribPointer(positionLoc, 3, this.gl.FLOAT, false, BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE, 0);
     this.gl.vertexAttribPointer(
       colorLoc,
       3,
       this.gl.FLOAT,
       false,
-      BUFFER_DATA_SINGLE_ELEMENT_SIZE * FLOAT_SIZE,
-      3 * FLOAT_SIZE
+      BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
+      3 * this.FLOAT_SIZE
     );
     this.gl.vertexAttribPointer(
       texCoordLoc,
       2,
       this.gl.FLOAT,
       false,
-      BUFFER_DATA_SINGLE_ELEMENT_SIZE * FLOAT_SIZE,
-      6 * FLOAT_SIZE
+      BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
+      6 * this.FLOAT_SIZE
     );
 
-    const indicesBuffer = this.gl.createBuffer();
+    const run = async () => {
+      const indicesBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
 
     const texture = this.gl.createTexture();
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, 500, 500, 0, this.gl.RGB, this.gl.UNSIGNED_BYTE, this.image);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, 5000, 5000, 0, this.gl.RGB, this.gl.UNSIGNED_BYTE, image);
     this.gl.generateMipmap(this.gl.TEXTURE_2D);
 
     // this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
+    }
+
+    const image = new Image();
+    image.src = imageUrl;
+    image.onload = run;
   }
 
   public getProjectionMatrix(): mat4 {

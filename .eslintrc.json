@@ -7,28 +7,16 @@
       "files": ["*.ts"],
       "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
       "rules": {
-        "@angular-eslint/directive-selector": [
-          "error",
-          {
-            "type": "attribute",
-            "prefix": "lib",
-            "style": "camelCase",
-          },
-        ],
-        "@angular-eslint/component-selector": [
-          "error",
-          {
-            "type": "element",
-            "prefix": "lib",
-            "style": "kebab-case",
-          },
-        ],
-      },
+        "prettier/prettier": ["error", { "endOfLine": "auto" }]
+      }
     },
     {
       "files": ["*.html"],
       "excludedFiles": ["*inline-template-*.component.html"],
       "extends": ["plugin:prettier/recommended"],
+      "rules": {
+        "prettier/prettier": ["error", { "endOfLine": "auto" }]
+      }
     },
   ],
 }
