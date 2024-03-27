@@ -9,6 +9,7 @@ export class WebglScene {
   constructor(
     canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
+    private image: Uint8Array,
     private camera: CameraInfo = {
       position: new Float32Array([0.0, 0.0, -1.3]),
       front: new Float32Array([0.0, 0.0, 1.0]),
@@ -86,7 +87,7 @@ export class WebglScene {
       2, 4, 6,
     ]);
 
-    // const pixels = new Uint8Array()
+    const pixels = new Uint8Array();
 
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 8;
     const FLOAT_SIZE = 4;
@@ -131,9 +132,10 @@ export class WebglScene {
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
 
-    // const texture = this.gl.createTexture();
-    // this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-    // this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, 4, 4, 0, this.gl.UNSIGNED_BYTE, pixels);
+    const texture = this.gl.createTexture();
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, 500, 500, 0, this.gl.RGB, this.gl.UNSIGNED_BYTE, this.image);
+    this.gl.generateMipmap(this.gl.TEXTURE_2D);
 
     // this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
     this.gl.enable(this.gl.DEPTH_TEST);

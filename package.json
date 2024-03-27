@@ -46,6 +46,7 @@
     "wepack-cli": "^0.0.1-security"
   },
   "dependencies": {
-    "gl-matrix": "^3.4.3"
+    "gl-matrix": "^3.4.3",
+    "rxjs": "^7.8.1"
   }
 }
