@@ -1,5 +1,28 @@
-import vertexShaderSource from './shaders/shader.vs'
-import fragmentShaderSource from './shaders/shader.fs'
+import vertexShaderSource from "./shaders/shader.vs";
+import fragmentShaderSource from "./shaders/shader.fs";
+// import styles from "./styles/styles.scss"
+
+let pointSize = 20.0;
+
+function addShader(
+  shaderSource: string,
+  shaderType: number,
+  context: WebGL2RenderingContext,
+  program: WebGLProgram
+): WebGLShader {
+  const shader = context.createShader(shaderType);
+  if (!shader) throw new Error(`Не удалось создать шейдер`);
+  context.shaderSource(shader, shaderSource);
+  context.compileShader(shader);
+  context.attachShader(program, shader);
+  return shader;
+}
+
+function renderCallback(context: WebGL2RenderingContext, pointSizeLocation: WebGLUniformLocation): void {
+  pointSize += 0.1;
+  context.uniform1f(pointSizeLocation, pointSize);
+  context.drawArrays(gl.POINTS, 0, 1);
+}
 
 const canvas = document.querySelector("canvas");
 if (!canvas) throw new Error(`Нет html-элемента canvas`);
@@ -8,16 +31,12 @@ if (!gl) throw new Error(`Не удалось создать контекст`);
 const program = gl.createProgram();
 if (!program) throw new Error(`Не удалось создать программу`);
 
-const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-if (!vertexShader) throw new Error(`Не удалось создать шейдер`);
-gl.shaderSource(vertexShader, vertexShaderSource);
-gl.compileShader(vertexShader);
-gl.attachShader(program, vertexShader);
+const vertexShader = addShader(vertexShaderSource, gl.VERTEX_SHADER, gl, program);
+const fragmentShader = addShader(fragmentShaderSource, gl.FRAGMENT_SHADER, gl, program);
 
-const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-if (!vertexShader) throw new Error(`Не удалось создать шейдер`);
-gl.shaderSource(fragmentShader, fragmentShaderSource);
-gl.compileShader(fragmentShader);
-gl.attachShader(program, fragmentShader);
+gl.linkProgram(program);
+const pointSizeLocation = gl.getUniformLocation(program, "pointSize");
 
 gl.useProgram(program);
+
+setInterval(() => renderCallback(gl, pointSizeLocation), 20);
