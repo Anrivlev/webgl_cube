@@ -44,5 +44,8 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4",
     "wepack-cli": "^0.0.1-security"
+  },
+  "dependencies": {
+    "gl-matrix": "^3.4.3"
   }
 }

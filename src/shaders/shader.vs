@@ -5,7 +5,9 @@ in vec3 aColor;
 
 out vec3 vColor;
 
+uniform mat4 WVP;
+
 void main() {
-    gl_Position = vec4(aPosition, 1.0f);
+    gl_Position = WVP * vec4(aPosition, 1.0f);
     vColor = aColor;
 }

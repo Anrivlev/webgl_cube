@@ -14,4 +14,6 @@ npm install eslint-plugin-prettier@latest --save-dev
 npm install --save-dev eslint-plugin-prettier eslint-config-prettier
 npm install --save-dev --save-exact prettier
 
+npm i gl-matrix
+
 npx prettier ./ --write
