@@ -39,7 +39,7 @@ export class WebglScene {
     this.gl.useProgram(this.program);
   }
 
-  public draw(): void {
+  public drawCube(): void {
     const bufferData = new Float32Array([
       -0.5, -0.5, -0.5, 0.2, 0.2, 0.2,
       //
@@ -91,8 +91,12 @@ export class WebglScene {
     const pointPositionLoc = this.gl.getAttribLocation(this.program, 'aPosition');
     const pointColorLoc = this.gl.getAttribLocation(this.program, 'aColor');
     const WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
-    const WVPm: mat4 = mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix());
-    this.gl.uniformMatrix4fv(WVPLoc, true, WVPm, 0, 0);
+    const WVPm: mat4 = mat4.mul(
+      mat4.create(),
+      mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
+      mat4.fromRotation(mat4.create(), 0.0, new Float32Array([0.0, 1.0, 0.0]))
+    );
+    this.gl.uniformMatrix4fv(WVPLoc, false, WVPm, 0, 0);
     this.gl.enableVertexAttribArray(pointPositionLoc);
     this.gl.enableVertexAttribArray(pointColorLoc);
 
@@ -122,39 +126,46 @@ export class WebglScene {
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
 
     // this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
-    this.gl.enable(this.gl.DEPTH_TEST);
-    this.gl.drawElements(this.gl.TRIANGLES, 24, this.gl.UNSIGNED_BYTE, 0);
+    // this.gl.enable(this.gl.DEPTH_TEST);
+    this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
   }
 
   public getProjectionMatrix(): mat4 {
     const r = this.vp.width / this.vp.height;
-    const f = 1 / Math.tan(this.vp.fov / 2);
-    const a = (this.vp.far + this.vp.near) / (this.vp.far - this.vp.near);
-    const b = (2 * this.vp.far * this.vp.near) / (this.vp.far - this.vp.near);
-    return new Float32Array([f / r, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, a, b, 0.0, 0.0, 1.0, 0.0]);
+    // const f = 1 / Math.tan(this.vp.fov / 2);
+    // const a = (this.vp.far + this.vp.near) / (this.vp.far - this.vp.near);
+    // const b = (2 * this.vp.far * this.vp.near) / (this.vp.far - this.vp.near);
+    // return new Float32Array([f / r, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, a, b, 0.0, 0.0, 1.0, 0.0]);
+    return mat4.perspective(mat4.create(), this.vp.fov, r, this.vp.near, this.vp.far);
   }
 
   public getCameraViewMatrix(): mat4 {
-    const N = this.camera.front;
-    const V = this.camera.up;
-    const U = vec3.cross(vec3.create(), N, V);
-    return new Float32Array([
-      U[0],
-      U[1],
-      U[2],
-      vec3.dot(vec3.negate(vec3.create(), U), this.camera.position),
-      V[0],
-      V[1],
-      V[2],
-      vec3.dot(vec3.negate(vec3.create(), V), this.camera.position),
-      N[0],
-      N[1],
-      N[2],
-      vec3.dot(N, this.camera.position),
-      0.0,
-      0.0,
-      0.0,
-      1.0,
-    ]);
+    // const N = this.camera.front;
+    // const V = this.camera.up;
+    // const U = vec3.cross(vec3.create(), N, V);
+    // return new Float32Array([
+    //   U[0],
+    //   U[1],
+    //   U[2],
+    //   vec3.dot(vec3.negate(vec3.create(), U), this.camera.position),
+    //   V[0],
+    //   V[1],
+    //   V[2],
+    //   vec3.dot(vec3.negate(vec3.create(), V), this.camera.position),
+    //   N[0],
+    //   N[1],
+    //   N[2],
+    //   vec3.dot(N, this.camera.position),
+    //   0.0,
+    //   0.0,
+    //   0.0,
+    //   1.0,
+    // ]);
+    return mat4.lookAt(
+      mat4.create(),
+      this.camera.position,
+      vec3.add(vec3.create(), this.camera.position, this.camera.front),
+      this.camera.up
+    );
   }
 }

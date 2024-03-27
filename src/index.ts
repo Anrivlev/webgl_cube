@@ -17,4 +17,4 @@ const webglScene = new WebglScene(canvas, {
 webglScene.addShader(vertexShaderSource, 'vertex');
 webglScene.addShader(fragmentShaderSource, 'fragment');
 webglScene.linkAndUseProgram();
-webglScene.draw();
+webglScene.drawCube();
