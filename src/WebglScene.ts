@@ -10,8 +10,8 @@ export class WebglScene {
     canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
     private camera: CameraInfo = {
-      position: new Float32Array([0.0, 0.0, -2.5]),
-      front: new Float32Array([0.0, 0.0, 1.0]),
+      position: new Float32Array([0.0, 0.0, 2.5]),
+      front: new Float32Array([0.0, 0.0, -1.0]),
       up: new Float32Array([0.0, 1.0, 0.0]),
       zoom: 1.0,
     }
@@ -126,7 +126,7 @@ export class WebglScene {
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
 
     // this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
-    // this.gl.enable(this.gl.DEPTH_TEST);
+    this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
   }
 
