@@ -57,6 +57,7 @@ export class WebglScene {
   }
 
   private textureSize = 16 / 512;
+  private textureOffset = 1 /512 / 2;
 
   private getCubeBufferData(textureOriginCoordIntU: number, textureOriginCoordIntV: number): Float32Array {
     return new Float32Array([
@@ -66,8 +67,8 @@ export class WebglScene {
       0.2,
       0.2,
       0.2,
-      textureOriginCoordIntU * this.textureSize + 0.0,
-      textureOriginCoordIntV * this.textureSize + 0.0,
+      textureOriginCoordIntU * this.textureSize + 0.0 + this.textureOffset,
+      textureOriginCoordIntV * this.textureSize + 0.0 + this.textureOffset,
       //
       -0.5,
       -0.5,
@@ -75,8 +76,8 @@ export class WebglScene {
       0.2,
       0.2,
       0.8,
-      textureOriginCoordIntU * this.textureSize + 0.0,
-      textureOriginCoordIntV * this.textureSize + this.textureSize,
+      textureOriginCoordIntU * this.textureSize + 0.0 + this.textureOffset,
+      textureOriginCoordIntV * this.textureSize + this.textureSize - this.textureOffset,
       //
       -0.5,
       0.5,
@@ -84,8 +85,8 @@ export class WebglScene {
       0.2,
       0.8,
       0.2,
-      textureOriginCoordIntU * this.textureSize + this.textureSize,
-      textureOriginCoordIntV * this.textureSize + 0.0,
+      textureOriginCoordIntU * this.textureSize + this.textureSize - this.textureOffset,
+      textureOriginCoordIntV * this.textureSize + 0.0 + this.textureOffset,
       //
       -0.5,
       0.5,
@@ -93,8 +94,8 @@ export class WebglScene {
       0.2,
       0.8,
       0.8,
-      textureOriginCoordIntU * this.textureSize + this.textureSize,
-      textureOriginCoordIntV * this.textureSize + this.textureSize,
+      textureOriginCoordIntU * this.textureSize + this.textureSize - this.textureOffset,
+      textureOriginCoordIntV * this.textureSize + this.textureSize - this.textureOffset,
       //
       0.5,
       -0.5,
@@ -102,8 +103,8 @@ export class WebglScene {
       0.8,
       0.2,
       0.2,
-      textureOriginCoordIntU * this.textureSize + 0.0,
-      textureOriginCoordIntV * this.textureSize + this.textureSize,
+      textureOriginCoordIntU * this.textureSize + 0.0 + this.textureOffset,
+      textureOriginCoordIntV * this.textureSize + this.textureSize - this.textureOffset,
       //
       0.5,
       -0.5,
@@ -111,8 +112,8 @@ export class WebglScene {
       0.8,
       0.2,
       0.8,
-      textureOriginCoordIntU * this.textureSize + 0.0,
-      textureOriginCoordIntV * this.textureSize + 0.0,
+      textureOriginCoordIntU * this.textureSize + 0.0 + this.textureOffset,
+      textureOriginCoordIntV * this.textureSize + 0.0 + this.textureOffset,
       //
       0.5,
       0.5,
@@ -120,8 +121,8 @@ export class WebglScene {
       0.8,
       0.8,
       0.2,
-      textureOriginCoordIntU * this.textureSize + this.textureSize,
-      textureOriginCoordIntV * this.textureSize + this.textureSize,
+      textureOriginCoordIntU * this.textureSize + this.textureSize - this.textureOffset,
+      textureOriginCoordIntV * this.textureSize + this.textureSize - this.textureOffset,
       //
       0.5,
       0.5,
@@ -129,8 +130,8 @@ export class WebglScene {
       0.8,
       0.8,
       0.8,
-      textureOriginCoordIntU * this.textureSize + this.textureSize,
-      textureOriginCoordIntV * this.textureSize + 0.0,
+      textureOriginCoordIntU * this.textureSize + this.textureSize - this.textureOffset,
+      textureOriginCoordIntV * this.textureSize + 0.0 + this.textureOffset,
       //
     ]);
   }
