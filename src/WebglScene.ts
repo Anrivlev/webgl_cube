@@ -7,8 +7,11 @@ export class WebglScene {
   private gl: WebGL2RenderingContext;
   private program: WebGLProgram;
   private FLOAT_SIZE = 4;
-  private bufferData: Float32Array;
-  private indicesBufferData: Uint8Array;
+  private vaoList: WebGLVertexArrayObject[];
+  private positionLoc: number;
+  private colorLoc: number;
+  private texCoordLoc: number;
+  private WVPLoc: WebGLUniformLocation;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -20,8 +23,8 @@ export class WebglScene {
       zoom: 1.0,
     }
   ) {
-    this.bufferData = new Float32Array();
-    this.indicesBufferData = new Uint8Array();
+    this.vaoList = [];
+
     const gl = canvas.getContext('webgl2');
     if (!gl) throw new Error(`Не удалось создать контекст`);
     this.gl = gl;
@@ -43,33 +46,88 @@ export class WebglScene {
   public linkAndUseProgram(): void {
     this.gl.linkProgram(this.program);
     this.gl.useProgram(this.program);
+
+    this.positionLoc = this.gl.getAttribLocation(this.program, 'aPosition');
+    this.colorLoc = this.gl.getAttribLocation(this.program, 'aColor');
+    this.texCoordLoc = this.gl.getAttribLocation(this.program, 'aTexCoord');
+    this.WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
   }
 
-  public loadTextures(): void {
+  public loadTextures(): void {}
 
-  }
-
-  public addCube(x:number, y: number, z:number) {
-
-  }
-
-  public drawCube(): void {
+  public addCube(x: number, y: number, z: number) {
     const bufferData = new Float32Array([
-      -0.5, -0.5, -0.5, 0.2, 0.2, 0.2, 0.0, 0.0,
+      x - 0.5,
+      y - 0.5,
+      z - 0.5,
+      0.2,
+      0.2,
+      0.2,
+      0.0,
+      0.0,
       //
-      -0.5, -0.5, 0.5, 0.2, 0.2, 0.8, 0.0, 1.0,
+      x - 0.5,
+      y - 0.5,
+      z + 0.5,
+      0.2,
+      0.2,
+      0.8,
+      0.0,
+      1.0,
       //
-      -0.5, 0.5, -0.5, 0.2, 0.8, 0.2, 1.0, 0.0,
+      x - 0.5,
+      y + 0.5,
+      z - 0.5,
+      0.2,
+      0.8,
+      0.2,
+      1.0,
+      0.0,
       //
-      -0.5, 0.5, 0.5, 0.2, 0.8, 0.8, 1.0, 1.0,
+      x - 0.5,
+      y + 0.5,
+      z + 0.5,
+      0.2,
+      0.8,
+      0.8,
+      1.0,
+      1.0,
       //
-      0.5, -0.5, -0.5, 0.8, 0.2, 0.2, 0.0, 1.0,
+      x + 0.5,
+      y - 0.5,
+      z - 0.5,
+      0.8,
+      0.2,
+      0.2,
+      0.0,
+      1.0,
       //
-      0.5, -0.5, 0.5, 0.8, 0.2, 0.8, 0.0, 0.0,
+      x + 0.5,
+      y - 0.5,
+      z + 0.5,
+      0.8,
+      0.2,
+      0.8,
+      0.0,
+      0.0,
       //
-      0.5, 0.5, -0.5, 0.8, 0.8, 0.2, 1.0, 1.0,
+      x + 0.5,
+      y + 0.5,
+      z - 0.5,
+      0.8,
+      0.8,
+      0.2,
+      1.0,
+      1.0,
       //
-      0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 1.0, 0.0,
+      x + 0.5,
+      y + 0.5,
+      z + 0.5,
+      0.8,
+      0.8,
+      0.8,
+      1.0,
+      0.0,
       //
     ]);
 
@@ -102,27 +160,27 @@ export class WebglScene {
 
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 8;
 
-    const positionLoc = this.gl.getAttribLocation(this.program, 'aPosition');
-    const colorLoc = this.gl.getAttribLocation(this.program, 'aColor');
-    const texCoordLoc = this.gl.getAttribLocation(this.program, 'aTexCoord');
-    const WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
-    const WVPm: mat4 = mat4.mul(
-      mat4.create(),
-      mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
-      mat4.fromRotation(mat4.create(), 0.8, new Float32Array([0.0, 1.0, 0.0]))
-    );
-    this.gl.uniformMatrix4fv(WVPLoc, false, WVPm, 0, 0);
+    const vao = this.gl.createVertexArray();
+    this.gl.bindVertexArray(vao);
 
     const buffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, bufferData, this.gl.STATIC_DRAW);
 
-    this.gl.enableVertexAttribArray(positionLoc);
-    this.gl.enableVertexAttribArray(colorLoc);
-    this.gl.enableVertexAttribArray(texCoordLoc);
-    this.gl.vertexAttribPointer(positionLoc, 3, this.gl.FLOAT, false, BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE, 0);
+    const indicesBuffer = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
+    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
+
     this.gl.vertexAttribPointer(
-      colorLoc,
+      this.positionLoc,
+      3,
+      this.gl.FLOAT,
+      false,
+      BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
+      0
+    );
+    this.gl.vertexAttribPointer(
+      this.colorLoc,
       3,
       this.gl.FLOAT,
       false,
@@ -130,33 +188,58 @@ export class WebglScene {
       3 * this.FLOAT_SIZE
     );
     this.gl.vertexAttribPointer(
-      texCoordLoc,
+      this.texCoordLoc,
       2,
       this.gl.FLOAT,
       false,
       BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
       6 * this.FLOAT_SIZE
     );
+    this.gl.enableVertexAttribArray(this.positionLoc);
+    this.gl.enableVertexAttribArray(this.colorLoc);
+    this.gl.enableVertexAttribArray(this.texCoordLoc);
+    this.gl.bindVertexArray(null);
+    this.vaoList.push(vao);
+  }
 
-    const run = async () => {
-      const indicesBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
-    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
+  public startLoop(): void {
+    this.addCube(0.0, 0.0, 0.0);
+    const WVPm: mat4 = mat4.mul(
+      mat4.create(),
+      mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
+      mat4.fromRotation(mat4.create(), 0.8, new Float32Array([0.0, 1.0, 0.0]))
+    );
+    this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
 
-    const texture = this.gl.createTexture();
-    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, 5000, 5000, 0, this.gl.RGB, this.gl.UNSIGNED_BYTE, image);
-    this.gl.generateMipmap(this.gl.TEXTURE_2D);
-
-    // this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
     this.gl.enable(this.gl.DEPTH_TEST);
-    this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
-    }
+    const run = async () => {
+      for (const vao of this.vaoList) {
+        this.gl.bindVertexArray(vao);
+        const texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.texImage2D(
+          this.gl.TEXTURE_2D,
+          0,
+          this.gl.RGB,
+          5000,
+          5000,
+          0,
+          this.gl.RGB,
+          this.gl.UNSIGNED_BYTE,
+          image
+        );
+        this.gl.generateMipmap(this.gl.TEXTURE_2D);
+        this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
+        this.gl.bindVertexArray(null);
+      }
+    };
 
     const image = new Image();
     image.src = imageUrl;
     image.onload = run;
   }
+
+  private draw(): void {}
 
   public getProjectionMatrix(): mat4 {
     const r = this.vp.width / this.vp.height;
