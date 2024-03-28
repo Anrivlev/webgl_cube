@@ -17,20 +17,20 @@ export class WebglScene {
     canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
     private camera: CameraInfo = {
-      position: new Float32Array([0.0, 0.0, -1.3]),
+      position: new Float32Array([0.0, 0.0, -1.5]),
       front: new Float32Array([0.0, 0.0, 1.0]),
       up: new Float32Array([0.0, 1.0, 0.0]),
       zoom: 1.0,
     }
   ) {
     this.vaoList = [];
-
     const gl = canvas.getContext('webgl2');
     if (!gl) throw new Error(`Не удалось создать контекст`);
     this.gl = gl;
     const program = gl.createProgram();
     if (!program) throw new Error(`Не удалось создать программу`);
     this.program = program;
+    this.gl.enable(this.gl.DEPTH_TEST);
   }
 
   public addShader(shaderSource: string, shaderType: 'vertex' | 'fragment'): WebGLShader {
@@ -204,42 +204,43 @@ export class WebglScene {
 
   public startLoop(): void {
     this.addCube(0.0, 0.0, 0.0);
-    const WVPm: mat4 = mat4.mul(
-      mat4.create(),
-      mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
-      mat4.fromRotation(mat4.create(), 0.8, new Float32Array([0.0, 1.0, 0.0]))
-    );
-    this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
-
-    this.gl.enable(this.gl.DEPTH_TEST);
-    const run = async () => {
-      for (const vao of this.vaoList) {
-        this.gl.bindVertexArray(vao);
-        const texture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-        this.gl.texImage2D(
-          this.gl.TEXTURE_2D,
-          0,
-          this.gl.RGB,
-          5000,
-          5000,
-          0,
-          this.gl.RGB,
-          this.gl.UNSIGNED_BYTE,
-          image
-        );
-        this.gl.generateMipmap(this.gl.TEXTURE_2D);
-        this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
-        this.gl.bindVertexArray(null);
-      }
-    };
+    // this.addCube(0.0, 2.0, 0.0);
+    // this.addCube(2.0, 1.0, 6.0);
+    // this.addCube(-1.0, -1.0, 5.0);
 
     const image = new Image();
     image.src = imageUrl;
-    image.onload = run;
+    image.onload = () => this.setTexture(image);
+
+    this.draw();
   }
 
-  private draw(): void {}
+  private setTexture(image: HTMLImageElement): void {
+    const texture = this.gl.createTexture();
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, 5000, 5000, 0, this.gl.RGB, this.gl.UNSIGNED_BYTE, image);
+    this.gl.generateMipmap(this.gl.TEXTURE_2D);
+  }
+
+  private rotationAngle = 0.0;
+
+  private draw(): void {
+    this.rotationAngle += 0.01;
+    const WVPm: mat4 = mat4.mul(
+      mat4.create(),
+      mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
+      mat4.fromRotation(mat4.create(), this.rotationAngle, new Float32Array([0.0, 1.0, 0.0]))
+    );
+    this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
+    for (const vao of this.vaoList) {
+      this.gl.bindVertexArray(vao);
+      
+
+      this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
+      this.gl.bindVertexArray(null);
+    }
+    setTimeout(() => this.draw(), 1000/60);
+  }
 
   public getProjectionMatrix(): mat4 {
     const r = this.vp.width / this.vp.height;
@@ -275,7 +276,8 @@ export class WebglScene {
     return mat4.lookAt(
       mat4.create(),
       this.camera.position,
-      vec3.add(vec3.create(), this.camera.position, this.camera.front),
+      new Float32Array([0.0, 0.0, 0.0]),
+      // vec3.add(vec3.create(), this.camera.position, this.camera.front),
       this.camera.up
     );
   }
