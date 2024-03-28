@@ -2,7 +2,8 @@ import { mat4, vec3 } from 'gl-matrix';
 import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
 import { CubeObject } from './model/CubeObject';
-import imageUrl from './resources/cube-texture.jpg';
+// import imageUrl from './resources/cube-texture.jpg';
+import imageUrl from './resources/Textures-16.png';
 import { randomInt } from 'crypto';
 
 export class WebglScene {
@@ -55,25 +56,81 @@ export class WebglScene {
     this.WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
   }
 
-  public loadTextures(): void {}
+  private textureSize = 16 / 512;
 
-  private getCubeBufferData(): Float32Array {
+  private getCubeBufferData(textureOriginCoordIntU: number, textureOriginCoordIntV: number): Float32Array {
     return new Float32Array([
-      -0.5, -0.5, -0.5, 0.2, 0.2, 0.2, 0.0, 0.0,
+      -0.5,
+      -0.5,
+      -0.5,
+      0.2,
+      0.2,
+      0.2,
+      textureOriginCoordIntU * this.textureSize + 0.0,
+      textureOriginCoordIntV * this.textureSize + 0.0,
       //
-      -0.5, -0.5, 0.5, 0.2, 0.2, 0.8, 0.0, 1.0,
+      -0.5,
+      -0.5,
+      0.5,
+      0.2,
+      0.2,
+      0.8,
+      textureOriginCoordIntU * this.textureSize + 0.0,
+      textureOriginCoordIntV * this.textureSize + this.textureSize,
       //
-      -0.5, 0.5, -0.5, 0.2, 0.8, 0.2, 1.0, 0.0,
+      -0.5,
+      0.5,
+      -0.5,
+      0.2,
+      0.8,
+      0.2,
+      textureOriginCoordIntU * this.textureSize + this.textureSize,
+      textureOriginCoordIntV * this.textureSize + 0.0,
       //
-      -0.5, 0.5, 0.5, 0.2, 0.8, 0.8, 1.0, 1.0,
+      -0.5,
+      0.5,
+      0.5,
+      0.2,
+      0.8,
+      0.8,
+      textureOriginCoordIntU * this.textureSize + this.textureSize,
+      textureOriginCoordIntV * this.textureSize + this.textureSize,
       //
-      0.5, -0.5, -0.5, 0.8, 0.2, 0.2, 0.0, 1.0,
+      0.5,
+      -0.5,
+      -0.5,
+      0.8,
+      0.2,
+      0.2,
+      textureOriginCoordIntU * this.textureSize + 0.0,
+      textureOriginCoordIntV * this.textureSize + this.textureSize,
       //
-      0.5, -0.5, 0.5, 0.8, 0.2, 0.8, 0.0, 0.0,
+      0.5,
+      -0.5,
+      0.5,
+      0.8,
+      0.2,
+      0.8,
+      textureOriginCoordIntU * this.textureSize + 0.0,
+      textureOriginCoordIntV * this.textureSize + 0.0,
       //
-      0.5, 0.5, -0.5, 0.8, 0.8, 0.2, 1.0, 1.0,
+      0.5,
+      0.5,
+      -0.5,
+      0.8,
+      0.8,
+      0.2,
+      textureOriginCoordIntU * this.textureSize + this.textureSize,
+      textureOriginCoordIntV * this.textureSize + this.textureSize,
       //
-      0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 1.0, 0.0,
+      0.5,
+      0.5,
+      0.5,
+      0.8,
+      0.8,
+      0.8,
+      textureOriginCoordIntU * this.textureSize + this.textureSize,
+      textureOriginCoordIntV * this.textureSize + 0.0,
       //
     ]);
   }
@@ -107,8 +164,17 @@ export class WebglScene {
     ]);
   }
 
-  public addCube(x: number, y: number, z: number, size: number, rotation: number, rotationSpeed?: number) {
-    const bufferData = this.getCubeBufferData();
+  public addCube(
+    x: number,
+    y: number,
+    z: number,
+    size: number,
+    rotation: number,
+    textureIntU: number,
+    textureIntV: number,
+    rotationSpeed?: number,
+  ) {
+    const bufferData = this.getCubeBufferData(textureIntU, textureIntV);
     const indicesBufferData = this.getCubeIndicesData();
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 8;
 
@@ -168,7 +234,7 @@ export class WebglScene {
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         for (let k = 0; k < n; k++) {
-          this.addCube(-n / 2 + i * gap, -n / 2 + j * gap, -n / 2 + k * gap, size, 0.0);
+          this.addCube(-n / 2 + i * gap, -n / 2 + j * gap, -n / 2 + k * gap, size, 0.0, i, j);
         }
       }
     }
@@ -187,8 +253,19 @@ export class WebglScene {
   private setTexture(image: HTMLImageElement): void {
     const texture = this.gl.createTexture();
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, 5000, 5000, 0, this.gl.RGB, this.gl.UNSIGNED_BYTE, image);
+    this.gl.texImage2D(
+      this.gl.TEXTURE_2D,
+      0,
+      this.gl.RGB,
+      image.width,
+      image.height,
+      0,
+      this.gl.RGB,
+      this.gl.UNSIGNED_BYTE,
+      image
+    );
     this.gl.generateMipmap(this.gl.TEXTURE_2D);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
   }
 
   private getTransformMatrix(scale: number, translation: vec3, angle: number): mat4 {
