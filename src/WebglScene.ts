@@ -4,7 +4,7 @@ import { CameraInfo } from './model/CameraInfo';
 import { CubeObject } from './model/CubeObject';
 // import imageUrl from './resources/cube-texture.jpg';
 import imageUrl from './resources/Textures-16.png';
-import { randomInt } from 'crypto';
+import { TextureCoordinatesMap, TextureNameType } from './TextureCoordinatesMap';
 
 export class WebglScene {
   private gl: WebGL2RenderingContext;
@@ -170,11 +170,13 @@ export class WebglScene {
     z: number,
     size: number,
     rotation: number,
-    textureIntU: number,
-    textureIntV: number,
-    rotationSpeed?: number,
+    textureName: TextureNameType,
+    rotationSpeed?: number
   ) {
-    const bufferData = this.getCubeBufferData(textureIntU, textureIntV);
+    const bufferData = this.getCubeBufferData(
+      TextureCoordinatesMap[textureName].u,
+      TextureCoordinatesMap[textureName].v
+    );
     const indicesBufferData = this.getCubeIndicesData();
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 8;
 
@@ -234,7 +236,14 @@ export class WebglScene {
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         for (let k = 0; k < n; k++) {
-          this.addCube(-n / 2 + i * gap, -n / 2 + j * gap, -n / 2 + k * gap, size, 0.0, i, j);
+          this.addCube(
+            -n / 2 + i * gap,
+            -n / 2 + j * gap,
+            -n / 2 + k * gap,
+            size,
+            0.0,
+            `${70 + i + j + k + 1}` as TextureNameType
+          );
         }
       }
     }
