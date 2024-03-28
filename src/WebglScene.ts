@@ -243,7 +243,7 @@ export class WebglScene {
             -n / 2 + k * gap,
             size,
             0.0,
-            `${70 + i + j + k + 1}` as TextureNameType
+            `${95 + i + j + k + 1}` as TextureNameType
           );
         }
       }
