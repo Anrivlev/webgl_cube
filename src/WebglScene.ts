@@ -1,13 +1,15 @@
 import { mat4, vec3 } from 'gl-matrix';
 import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
+import { CubeObject } from './model/CubeObject';
 import imageUrl from './resources/cube-texture.jpg';
+import { randomInt } from 'crypto';
 
 export class WebglScene {
   private gl: WebGL2RenderingContext;
   private program: WebGLProgram;
   private FLOAT_SIZE = 4;
-  private vaoList: WebGLVertexArrayObject[];
+  private cubeList: CubeObject[];
   private positionLoc: number;
   private colorLoc: number;
   private texCoordLoc: number;
@@ -23,7 +25,7 @@ export class WebglScene {
       zoom: 1.0,
     }
   ) {
-    this.vaoList = [];
+    this.cubeList = [];
     const gl = canvas.getContext('webgl2');
     if (!gl) throw new Error(`Не удалось создать контекст`);
     this.gl = gl;
@@ -55,83 +57,29 @@ export class WebglScene {
 
   public loadTextures(): void {}
 
-  public addCube(x: number, y: number, z: number) {
-    const bufferData = new Float32Array([
-      x - 0.5,
-      y - 0.5,
-      z - 0.5,
-      0.2,
-      0.2,
-      0.2,
-      0.0,
-      0.0,
+  private getCubeBufferData(): Float32Array {
+    return new Float32Array([
+      -0.5, -0.5, -0.5, 0.2, 0.2, 0.2, 0.0, 0.0,
       //
-      x - 0.5,
-      y - 0.5,
-      z + 0.5,
-      0.2,
-      0.2,
-      0.8,
-      0.0,
-      1.0,
+      -0.5, -0.5, 0.5, 0.2, 0.2, 0.8, 0.0, 1.0,
       //
-      x - 0.5,
-      y + 0.5,
-      z - 0.5,
-      0.2,
-      0.8,
-      0.2,
-      1.0,
-      0.0,
+      -0.5, 0.5, -0.5, 0.2, 0.8, 0.2, 1.0, 0.0,
       //
-      x - 0.5,
-      y + 0.5,
-      z + 0.5,
-      0.2,
-      0.8,
-      0.8,
-      1.0,
-      1.0,
+      -0.5, 0.5, 0.5, 0.2, 0.8, 0.8, 1.0, 1.0,
       //
-      x + 0.5,
-      y - 0.5,
-      z - 0.5,
-      0.8,
-      0.2,
-      0.2,
-      0.0,
-      1.0,
+      0.5, -0.5, -0.5, 0.8, 0.2, 0.2, 0.0, 1.0,
       //
-      x + 0.5,
-      y - 0.5,
-      z + 0.5,
-      0.8,
-      0.2,
-      0.8,
-      0.0,
-      0.0,
+      0.5, -0.5, 0.5, 0.8, 0.2, 0.8, 0.0, 0.0,
       //
-      x + 0.5,
-      y + 0.5,
-      z - 0.5,
-      0.8,
-      0.8,
-      0.2,
-      1.0,
-      1.0,
+      0.5, 0.5, -0.5, 0.8, 0.8, 0.2, 1.0, 1.0,
       //
-      x + 0.5,
-      y + 0.5,
-      z + 0.5,
-      0.8,
-      0.8,
-      0.8,
-      1.0,
-      0.0,
+      0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 1.0, 0.0,
       //
     ]);
+  }
 
-    const indicesBufferData = new Uint8Array([
+  private getCubeIndicesData(): Uint8Array {
+    return new Uint8Array([
       // LEFT
       1, 2, 3,
       //
@@ -157,7 +105,11 @@ export class WebglScene {
       //
       2, 4, 6,
     ]);
+  }
 
+  public addCube(x: number, y: number, z: number, size: number, rotation: number, rotationSpeed?: number) {
+    const bufferData = this.getCubeBufferData();
+    const indicesBufferData = this.getCubeIndicesData();
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 8;
 
     const vao = this.gl.createVertexArray();
@@ -199,14 +151,31 @@ export class WebglScene {
     this.gl.enableVertexAttribArray(this.colorLoc);
     this.gl.enableVertexAttribArray(this.texCoordLoc);
     this.gl.bindVertexArray(null);
-    this.vaoList.push(vao);
+    this.cubeList.push({
+      vao: vao,
+      position: new Float32Array([x, y, z]),
+      size: size,
+      rotation: rotation,
+      speedRotation: rotationSpeed ?? this.getRandomArbitrary(0.001, 0.05),
+    });
+  }
+
+  private getRandomArbitrary(min: number, max: number) {
+    return Math.random() * (max - min) + min;
+  }
+
+  public addNCubedCubesAtOrigin(n: number, gap: number, size: number) {
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        for (let k = 0; k < n; k++) {
+          this.addCube(-n / 2 + i * gap, -n / 2 + j * gap, -n / 2 + k * gap, size, 0.0);
+        }
+      }
+    }
   }
 
   public startLoop(): void {
-    this.addCube(0.0, 0.0, 0.0);
-    // this.addCube(0.0, 2.0, 0.0);
-    // this.addCube(2.0, 1.0, 6.0);
-    // this.addCube(-1.0, -1.0, 5.0);
+    this.addNCubedCubesAtOrigin(6, 1, 0.25);
 
     const image = new Image();
     image.src = imageUrl;
@@ -222,24 +191,28 @@ export class WebglScene {
     this.gl.generateMipmap(this.gl.TEXTURE_2D);
   }
 
-  private rotationAngle = 0.0;
+  private getTransformMatrix(scale: number, translation: vec3, angle: number): mat4 {
+    let out = mat4.fromRotation(mat4.create(), angle, new Float32Array([0.0, 1.0, 0.0]));
+    out = mat4.mul(mat4.create(), mat4.fromScaling(mat4.create(), new Float32Array([scale, scale, scale])), out);
+    out = mat4.mul(mat4.create(), mat4.fromTranslation(mat4.create(), translation), out);
+    return out;
+  }
 
   private draw(): void {
-    this.rotationAngle += 0.01;
-    const WVPm: mat4 = mat4.mul(
-      mat4.create(),
-      mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
-      mat4.fromRotation(mat4.create(), this.rotationAngle, new Float32Array([0.0, 1.0, 0.0]))
-    );
-    this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
-    for (const vao of this.vaoList) {
-      this.gl.bindVertexArray(vao);
-      
+    for (const cube of this.cubeList) {
+      cube.rotation += cube.speedRotation;
+      this.gl.bindVertexArray(cube.vao);
+      const WVPm: mat4 = mat4.mul(
+        mat4.create(),
+        mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
+        this.getTransformMatrix(cube.size, cube.position, cube.rotation)
+      );
+      this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
 
       this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
       this.gl.bindVertexArray(null);
     }
-    setTimeout(() => this.draw(), 1000/60);
+    setTimeout(() => this.draw(), 1000 / 60);
   }
 
   public getProjectionMatrix(): mat4 {
