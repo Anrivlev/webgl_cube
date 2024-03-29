@@ -431,7 +431,7 @@ export class WebglScene {
             size,
             0.0,
             (i * n ** 2 + j * n + k) % (7 * 12),
-            [i / n, j / n, k / n],
+            [this.getRandomArbitrary(0.0, 1.0), this.getRandomArbitrary(0.0, 1.0), this.getRandomArbitrary(0.0, 1.0)],
             0.7
           );
         }
