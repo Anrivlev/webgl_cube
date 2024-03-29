@@ -3,17 +3,17 @@ import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
 import { CubeObject } from './model/CubeObject';
 // import imageUrl from './resources/cube-texture.jpg';
-import imageUrl from './resources/Textures-16.png';
+// import imageUrl from './resources/Textures-16.png';
+import imageUrl from './resources/patternPack_tilesheet@2.png';
 import { TextureCoordinatesMap, TextureNameType } from './TextureCoordinatesMap';
+import { AttribLocations } from './model/AttribLocations';
 
 export class WebglScene {
   private gl: WebGL2RenderingContext;
   private program: WebGLProgram;
   private FLOAT_SIZE = 4;
   private cubeList: CubeObject[];
-  private positionLoc: number;
-  private colorLoc: number;
-  private texCoordLoc: number;
+  private attribLocs?: AttribLocations;
   private WVPLoc: WebGLUniformLocation;
 
   constructor(
@@ -50,16 +50,21 @@ export class WebglScene {
     this.gl.linkProgram(this.program);
     this.gl.useProgram(this.program);
 
-    this.positionLoc = this.gl.getAttribLocation(this.program, 'aPosition');
-    this.colorLoc = this.gl.getAttribLocation(this.program, 'aColor');
-    this.texCoordLoc = this.gl.getAttribLocation(this.program, 'aTexCoord');
+    this.attribLocs = {
+      position: this.gl.getAttribLocation(this.program, 'aPosition'),
+      color: this.gl.getAttribLocation(this.program, 'aColor'),
+      texCoord: this.gl.getAttribLocation(this.program, 'aTexCoord'),
+      texId: this.gl.getAttribLocation(this.program, 'aTexId'),
+    };
     this.WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
   }
 
-  private textureSize = 16 / 512;
-  private textureOffset = 1 / 512 / 2;
+  // private textureSize = 16 / 512;
+  // private textureOffset = 1 / 512 / 2;
+  private textureSize = 1.0;
+  private textureOffset = 0.0;
 
-  private getCubeBufferData(textureOriginCoordIntU: number, textureOriginCoordIntV: number): Float32Array {
+  private getCubeBufferData(texCoordU: number, texCoordV: number, texId: number): Float32Array {
     return new Float32Array([
       -0.5,
       -0.5,
@@ -67,8 +72,9 @@ export class WebglScene {
       0.2,
       0.2,
       0.2,
-      textureOriginCoordIntU * this.textureSize + 0.0 + this.textureOffset,
-      textureOriginCoordIntV * this.textureSize + 0.0 + this.textureOffset,
+      texCoordU * this.textureSize + 0.0 + this.textureOffset,
+      texCoordV * this.textureSize + 0.0 + this.textureOffset,
+      texId,
       //
       -0.5,
       -0.5,
@@ -76,8 +82,9 @@ export class WebglScene {
       0.2,
       0.2,
       0.8,
-      textureOriginCoordIntU * this.textureSize + 0.0 + this.textureOffset,
-      textureOriginCoordIntV * this.textureSize + this.textureSize - this.textureOffset,
+      texCoordU * this.textureSize + 0.0 + this.textureOffset,
+      texCoordV * this.textureSize + this.textureSize - this.textureOffset,
+      texId,
       //
       -0.5,
       0.5,
@@ -85,8 +92,9 @@ export class WebglScene {
       0.2,
       0.8,
       0.2,
-      textureOriginCoordIntU * this.textureSize + this.textureSize - this.textureOffset,
-      textureOriginCoordIntV * this.textureSize + 0.0 + this.textureOffset,
+      texCoordU * this.textureSize + this.textureSize - this.textureOffset,
+      texCoordV * this.textureSize + 0.0 + this.textureOffset,
+      texId,
       //
       -0.5,
       0.5,
@@ -94,8 +102,9 @@ export class WebglScene {
       0.2,
       0.8,
       0.8,
-      textureOriginCoordIntU * this.textureSize + this.textureSize - this.textureOffset,
-      textureOriginCoordIntV * this.textureSize + this.textureSize - this.textureOffset,
+      texCoordU * this.textureSize + this.textureSize - this.textureOffset,
+      texCoordV * this.textureSize + this.textureSize - this.textureOffset,
+      texId,
       //
       0.5,
       -0.5,
@@ -103,8 +112,9 @@ export class WebglScene {
       0.8,
       0.2,
       0.2,
-      textureOriginCoordIntU * this.textureSize + 0.0 + this.textureOffset,
-      textureOriginCoordIntV * this.textureSize + this.textureSize - this.textureOffset,
+      texCoordU * this.textureSize + 0.0 + this.textureOffset,
+      texCoordV * this.textureSize + this.textureSize - this.textureOffset,
+      texId,
       //
       0.5,
       -0.5,
@@ -112,8 +122,9 @@ export class WebglScene {
       0.8,
       0.2,
       0.8,
-      textureOriginCoordIntU * this.textureSize + 0.0 + this.textureOffset,
-      textureOriginCoordIntV * this.textureSize + 0.0 + this.textureOffset,
+      texCoordU * this.textureSize + 0.0 + this.textureOffset,
+      texCoordV * this.textureSize + 0.0 + this.textureOffset,
+      texId,
       //
       0.5,
       0.5,
@@ -121,8 +132,9 @@ export class WebglScene {
       0.8,
       0.8,
       0.2,
-      textureOriginCoordIntU * this.textureSize + this.textureSize - this.textureOffset,
-      textureOriginCoordIntV * this.textureSize + this.textureSize - this.textureOffset,
+      texCoordU * this.textureSize + this.textureSize - this.textureOffset,
+      texCoordV * this.textureSize + this.textureSize - this.textureOffset,
+      texId,
       //
       0.5,
       0.5,
@@ -130,8 +142,9 @@ export class WebglScene {
       0.8,
       0.8,
       0.8,
-      textureOriginCoordIntU * this.textureSize + this.textureSize - this.textureOffset,
-      textureOriginCoordIntV * this.textureSize + 0.0 + this.textureOffset,
+      texCoordU * this.textureSize + this.textureSize - this.textureOffset,
+      texCoordV * this.textureSize + 0.0 + this.textureOffset,
+      texId,
       //
     ]);
   }
@@ -171,15 +184,19 @@ export class WebglScene {
     z: number,
     size: number,
     rotation: number,
-    textureName: TextureNameType,
+    // textureName: TextureNameType,
+    textureId: number,
     rotationSpeed?: number
   ) {
     const bufferData = this.getCubeBufferData(
-      TextureCoordinatesMap[textureName].u,
-      TextureCoordinatesMap[textureName].v
+      // TextureCoordinatesMap[textureName].u,
+      // TextureCoordinatesMap[textureName].v
+      0.0,
+      1.0,
+      textureId
     );
     const indicesBufferData = this.getCubeIndicesData();
-    const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 8;
+    const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 9;
 
     const vao = this.gl.createVertexArray();
     this.gl.bindVertexArray(vao);
@@ -193,7 +210,7 @@ export class WebglScene {
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
 
     this.gl.vertexAttribPointer(
-      this.positionLoc,
+      this.attribLocs.position,
       3,
       this.gl.FLOAT,
       false,
@@ -201,7 +218,7 @@ export class WebglScene {
       0
     );
     this.gl.vertexAttribPointer(
-      this.colorLoc,
+      this.attribLocs.color,
       3,
       this.gl.FLOAT,
       false,
@@ -209,16 +226,25 @@ export class WebglScene {
       3 * this.FLOAT_SIZE
     );
     this.gl.vertexAttribPointer(
-      this.texCoordLoc,
+      this.attribLocs.texCoord,
       2,
       this.gl.FLOAT,
       false,
       BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
       6 * this.FLOAT_SIZE
     );
-    this.gl.enableVertexAttribArray(this.positionLoc);
-    this.gl.enableVertexAttribArray(this.colorLoc);
-    this.gl.enableVertexAttribArray(this.texCoordLoc);
+    this.gl.vertexAttribPointer(
+      this.attribLocs.texId,
+      1,
+      this.gl.FLOAT,
+      false,
+      BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
+      8 * this.FLOAT_SIZE
+    );
+    this.gl.enableVertexAttribArray(this.attribLocs.position);
+    this.gl.enableVertexAttribArray(this.attribLocs.color);
+    this.gl.enableVertexAttribArray(this.attribLocs.texCoord);
+    this.gl.enableVertexAttribArray(this.attribLocs.texId);
     this.gl.bindVertexArray(null);
     this.cubeList.push({
       vao: vao,
@@ -237,14 +263,7 @@ export class WebglScene {
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         for (let k = 0; k < n; k++) {
-          this.addCube(
-            -n / 2 + i * gap,
-            -n / 2 + j * gap,
-            -n / 2 + k * gap,
-            size,
-            0.0,
-            `${i * n ** 2 + j * n + k + 1}` as TextureNameType
-          );
+          this.addCube(-n / 2 + i * gap, -n / 2 + j * gap, -n / 2 + k * gap, size, 0.0, (i + j + k) % (7 * 12));
         }
       }
     }
@@ -253,12 +272,62 @@ export class WebglScene {
   public startLoop(): void {
     const image = new Image();
     image.src = imageUrl;
-    image.onload = () => this.setTexture(image);
+    // image.onload = () => this.setTextureSimple(image);
+    image.onload = () => this.setTexture(image, 512);
 
     this.draw();
   }
 
-  private setTexture(image: HTMLImageElement): void {
+  private convertImageToArray(image: HTMLImageElement): Uint8ClampedArray {
+    const { width, height } = image;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    return context.getImageData(0, 0, width, height).data;
+  }
+
+  private setTexture(image: HTMLImageElement, tileSize: number): void {
+    const rowCount = Math.floor(image.height / tileSize);
+    const columnCount = Math.floor(image.width / tileSize);
+    const tileCount = rowCount * columnCount;
+    const imageData = this.convertImageToArray(image);
+    const texture = this.gl.createTexture();
+    this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
+    this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, 1, this.gl.RGBA8, tileSize, tileSize, tileCount);
+    const pbo = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.PIXEL_UNPACK_BUFFER, pbo);
+    this.gl.bufferData(this.gl.PIXEL_UNPACK_BUFFER, imageData, this.gl.STATIC_DRAW);
+    this.gl.pixelStorei(this.gl.UNPACK_ROW_LENGTH, image.width);
+    this.gl.pixelStorei(this.gl.UNPACK_IMAGE_HEIGHT, image.height);
+
+    this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
+    this.gl.generateMipmap(this.gl.TEXTURE_2D_ARRAY);
+
+    for (let i = 0; i < rowCount; i++) {
+      for (let j = 0; j < columnCount; j++) {
+        this.gl.pixelStorei(this.gl.UNPACK_SKIP_PIXELS, j * tileSize);
+        this.gl.pixelStorei(this.gl.UNPACK_SKIP_ROWS, i * tileSize);
+        this.gl.texSubImage3D(
+          this.gl.TEXTURE_2D_ARRAY,
+          0,
+          0,
+          0,
+          i + j,
+          tileSize,
+          tileSize,
+          1,
+          this.gl.RGBA,
+          this.gl.UNSIGNED_BYTE,
+          0
+        );
+      }
+    }
+  }
+
+  private setTextureSimple(image: HTMLImageElement): void {
     const texture = this.gl.createTexture();
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
     this.gl.texImage2D(
