@@ -253,7 +253,7 @@ export class WebglScene {
       position: new Float32Array([x, y, z]),
       size: size,
       rotation: rotation,
-      speedRotation: rotationSpeed ?? this.getRandomArbitrary(0.001, 0.05),
+      speedRotation: rotationSpeed ?? this.getRandomArbitrary(-0.05, 0.05),
     });
   }
 
