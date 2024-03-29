@@ -33,6 +33,8 @@ export class WebglScene {
     const program = gl.createProgram();
     if (!program) throw new Error(`Не удалось создать программу`);
     this.program = program;
+    this.gl.enable(this.gl.CULL_FACE);
+    this.gl.cullFace(this.gl.FRONT);
     this.gl.enable(this.gl.DEPTH_TEST);
   }
 
@@ -263,7 +265,14 @@ export class WebglScene {
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         for (let k = 0; k < n; k++) {
-          this.addCube(-n / 2 + i * gap, -n / 2 + j * gap, -n / 2 + k * gap, size, 0.0, (i + j + k) % (7 * 12));
+          this.addCube(
+            -n / 2 + i * gap,
+            -n / 2 + j * gap,
+            -n / 2 + k * gap,
+            size,
+            0.0,
+            (i * n ** 2 + j * n + k) % (7 * 12)
+          );
         }
       }
     }
@@ -315,7 +324,7 @@ export class WebglScene {
           0,
           0,
           0,
-          i + j,
+          i* columnCount + j,
           tileSize,
           tileSize,
           1,
