@@ -19,7 +19,7 @@ const webglScene = new WebglScene(canvas, {
 webglScene.addShader(vertexShaderSource, 'vertex');
 webglScene.addShader(fragmentShaderSource, 'fragment');
 webglScene.linkAndUseProgram();
-webglScene.addNCubedCubesAtOrigin(6, 1.0, 0.25);
+webglScene.addNCubedCubesAtOrigin(8, 1.5, 0.25);
 webglScene.enableControls();
 webglScene.startLoop();
 

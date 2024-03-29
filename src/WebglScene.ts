@@ -2,7 +2,6 @@ import { mat4, vec3 } from 'gl-matrix';
 import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
 import { CubeObject } from './model/CubeObject';
-// import imageUrl from './resources/cube-texture.jpg';
 import imageUrl from './resources/patternPack_tilesheet@2.png';
 import { AttribLocations } from './model/AttribLocations';
 
@@ -13,21 +12,30 @@ export class WebglScene {
   private cubeList: CubeObject[];
   private attribLocs?: AttribLocations;
   private WVPLoc: WebGLUniformLocation;
+  private camera: CameraInfo;
+
+  private mousePrevPosX: number | undefined;
+  private mousePrevPosY: number | undefined;
 
   constructor(
     private canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
-    private camera: CameraInfo = {
-      center: [0.0, 0.0, 0.0],
-      phi: -90.0,
-      theta: 90.0,
-      zoom: 1.0,
-
-      position: [0.0, 0.0, -1.0],
-      front: [0.0, 0.0, 1.0],
-      up: [0.0, 1.0, 0.0],
-    }
+    camera?: Partial<CameraInfo>
   ) {
+    this.camera = {
+      center: camera?.center ?? [0.0, 0.0, 0.0],
+      phi: camera?.phi ?? -90.0,
+      theta: camera?.theta ?? 80.0,
+      zoom: camera?.zoom ?? 1.0,
+      minTheta: camera?.minTheta ?? 10.0,
+      maxTheta: camera?.maxTheta ?? 80.0,
+      position: [0.0, 0.0, 0.0],
+      front: [0.0, 0.0, 0.0],
+      up: [0.0, 0.0, 0.0],
+      right: [0.0, 0.0, 0.0],
+    };
+    this.updateCamera();
+
     this.cubeList = [];
 
     const gl = this.canvas.getContext('webgl2');
@@ -73,8 +81,6 @@ export class WebglScene {
     this.WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
   }
 
-  // private textureSize = 16 / 512;
-  // private textureOffset = 1 / 512 / 2;
   private textureSize = 1.0;
   private textureOffset = 0.0;
 
@@ -275,9 +281,6 @@ export class WebglScene {
     return Math.random() * (max - min) + min;
   }
 
-  private cameraPrevPosX = -1;
-  private cameraPrevPosY = -1;
-
   public enableControls(): void {
     document.addEventListener('keydown', event => {
       this.keyboardCallback(event);
@@ -294,16 +297,31 @@ export class WebglScene {
   }
 
   private mousedownCallback(event: MouseEvent): void {
-    this.cameraPrevPosX = event.x;
-    this.cameraPrevPosY = event.y;
+    this.mousePrevPosX = event.x;
+    this.mousePrevPosY = event.y;
   }
 
   private mouseupCallback(event: MouseEvent): void {
-    this.cameraPrevPosX = -1;
-    this.cameraPrevPosY = -1;
+    this.mousePrevPosX = undefined;
+    this.mousePrevPosY = undefined;
   }
 
-  private mousemoveCallback(event: MouseEvent): void {}
+  private mousemoveCallback(event: MouseEvent): void {
+    const sensitivity = 0.25;
+    if (this.mousePrevPosX !== undefined && this.mousePrevPosY !== undefined) {
+      const mousedx = event.x - this.mousePrevPosX;
+      const mousedy = event.y - this.mousePrevPosY;
+      this.mousePrevPosX = event.x;
+      this.mousePrevPosY = event.y;
+
+      if (mousedx !== 0) this.camera.phi += sensitivity * mousedx;
+      const newTheta = this.camera.theta - sensitivity * mousedy;
+      if (mousedy !== 0 && newTheta <= this.camera.maxTheta && newTheta >= this.camera.minTheta)
+        this.camera.theta = newTheta;
+
+      this.updateCamera();
+    }
+  }
 
   private updateCamera(): void {
     const sint = Math.sin((this.camera.theta * Math.PI) / 180.0);
@@ -318,6 +336,7 @@ export class WebglScene {
 
     this.camera.front = vec3.normalize(this.camera.front, [-sint * cosp, -cost, -sint * sinp]);
     this.camera.up = vec3.normalize(this.camera.up, [-cost * cosp, sint, -cost * sinp]);
+    this.camera.right = vec3.normalize(this.camera.right, [sinp, 0, -cosp]);
     console.log(this.camera);
   }
 
@@ -343,6 +362,40 @@ export class WebglScene {
       }
       case 'd': {
         this.camera.center[0] -= speed;
+        this.updateCamera();
+        break;
+      }
+    }
+  }
+
+  /**
+   * Well...... it's worth playing with
+   * @param event
+   */
+  private keyboardInSpaceCallback(event: KeyboardEvent): void {
+    const speed = 0.03;
+    switch (event.key.toLowerCase()) {
+      case 'w': {
+        if (event.shiftKey)
+          vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.up, speed));
+        else vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.front, speed));
+        this.updateCamera();
+        break;
+      }
+      case 's': {
+        if (event.shiftKey)
+          vec3.sub(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.up, speed));
+        else vec3.sub(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.front, speed));
+        this.updateCamera();
+        break;
+      }
+      case 'a': {
+        vec3.sub(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.right, speed));
+        this.updateCamera();
+        break;
+      }
+      case 'd': {
+        vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.right, speed));
         this.updateCamera();
         break;
       }
