@@ -15,7 +15,7 @@ export class WebglScene {
   private WVPLoc: WebGLUniformLocation;
 
   constructor(
-    canvas: HTMLCanvasElement,
+    private canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
     private camera: CameraInfo = {
       position: new Float32Array([0.0, 0.0, -3.5]),
@@ -26,7 +26,7 @@ export class WebglScene {
   ) {
     this.cubeList = [];
 
-    const gl = canvas.getContext('webgl2');
+    const gl = this.canvas.getContext('webgl2');
     if (!gl) throw new Error(`Не удалось создать контекст`);
     this.gl = gl;
     const program = gl.createProgram();
@@ -442,7 +442,7 @@ export class WebglScene {
   }
 
   public getProjectionMatrix(): mat4 {
-    const r = this.vp.width / this.vp.height;
+    const r = this.canvas.width / this.canvas.height;
     // const f = 1 / Math.tan(this.vp.fov / 2);
     // const a = (this.vp.far + this.vp.near) / (this.vp.far - this.vp.near);
     // const b = (2 * this.vp.far * this.vp.near) / (this.vp.far - this.vp.near);
