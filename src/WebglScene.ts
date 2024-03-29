@@ -18,7 +18,7 @@ export class WebglScene {
     canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
     private camera: CameraInfo = {
-      position: new Float32Array([0.0, 0.0, 2.5]),
+      position: new Float32Array([0.0, 0.0, -3.5]),
       front: new Float32Array([0.0, 0.0, 1.0]),
       up: new Float32Array([0.0, 1.0, 0.0]),
       zoom: 1.0,
@@ -206,7 +206,7 @@ export class WebglScene {
     alpha?: number,
     rotationSpeed?: number
   ) {
-    const bufferData = this.getCubeBufferData(0.0, 1.0, textureId, alpha);
+    const bufferData = this.getCubeBufferData(0.0, 0.0, textureId, alpha);
     const indicesBufferData = this.getCubeIndicesData();
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 10;
 
@@ -298,7 +298,6 @@ export class WebglScene {
       let j = i - 1;
       const curr = list[i];
       while (j > -1 && compare(curr, list[j]) < 0) {
-        console.log('swapped');
         list[j + 1] = list[j];
         j--;
       }
@@ -422,7 +421,7 @@ export class WebglScene {
     // const a = (this.vp.far + this.vp.near) / (this.vp.far - this.vp.near);
     // const b = (2 * this.vp.far * this.vp.near) / (this.vp.far - this.vp.near);
     // return new Float32Array([f / r, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, a, b, 0.0, 0.0, 1.0, 0.0]);
-    return mat4.perspective(mat4.create(), this.vp.fov, r, this.vp.near, this.vp.far);
+    return mat4.perspective(mat4.create(), this.vp.fov * Math.PI / 180, r, this.vp.near, this.vp.far);
   }
 
   public getCameraViewMatrix(): mat4 {
@@ -450,8 +449,7 @@ export class WebglScene {
     return mat4.lookAt(
       mat4.create(),
       this.camera.position,
-      new Float32Array([0.0, 0.0, 0.0]),
-      // vec3.add(vec3.create(), this.camera.position, this.camera.front),
+      vec3.add(vec3.create(), this.camera.position, vec3.scale(vec3.create(), this.camera.front, this.camera.zoom)),
       this.camera.up
     );
   }
