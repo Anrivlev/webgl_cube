@@ -33,8 +33,8 @@ export class WebglScene {
     if (!program) throw new Error(`Не удалось создать программу`);
     this.program = program;
 
-    this.gl.enable(this.gl.CULL_FACE);
-    this.gl.cullFace(this.gl.FRONT);
+    // this.gl.enable(this.gl.CULL_FACE);
+    // this.gl.cullFace(this.gl.FRONT);
 
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.depthFunc(this.gl.LEQUAL);
@@ -269,6 +269,29 @@ export class WebglScene {
 
   private getRandomArbitrary(min: number, max: number) {
     return Math.random() * (max - min) + min;
+  }
+
+  public keyboardCallback(event: KeyboardEvent): void {
+    console.log('event fired!');
+    const speed = 0.02;
+    switch(event.key) {
+      case 'w': {
+        this.camera.position[2] += speed;
+        break;
+      }
+      case 's': {
+        this.camera.position[2] -= speed;
+        break;
+      }
+      case 'a': {
+        this.camera.position[0] += speed;
+        break;
+      }
+      case 'd': {
+        this.camera.position[0] -= speed;
+        break;
+      }
+    }
   }
 
   public addNCubedCubesAtOrigin(n: number, gap: number, size: number) {
