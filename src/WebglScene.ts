@@ -1,9 +1,10 @@
-import { mat3, mat4, vec3 } from 'gl-matrix';
+import { mat4, vec3 } from 'gl-matrix';
 import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
 import { CubeObject } from './model/CubeObject';
 import imageUrl from './resources/patternPack_tilesheet@2.png';
 import { AttribLocations } from './model/AttribLocations';
+import { ControlSettings } from './model/ControlSettings';
 
 export class WebglScene {
   private gl: WebGL2RenderingContext;
@@ -18,11 +19,13 @@ export class WebglScene {
   private mousePrevPosY: number | undefined;
 
   private player?: CubeObject;
+  private controlSettings: ControlSettings;
 
   constructor(
     private canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
-    camera?: Partial<CameraInfo>
+    camera?: Partial<CameraInfo>,
+    controlSettings?: Partial<ControlSettings>
   ) {
     this.camera = {
       center: camera?.center ?? [0.0, 0.0, 0.0],
@@ -31,6 +34,8 @@ export class WebglScene {
       zoom: camera?.zoom ?? 1.0,
       minTheta: camera?.minTheta ?? 0.0,
       maxTheta: camera?.maxTheta ?? 180.0,
+      minZoom: camera?.minZoom ?? 0.5,
+      maxZoom: camera?.maxZoom ?? 10.0,
       position: [0.0, 0.0, 0.0],
       front: [0.0, 0.0, 0.0],
       up: [0.0, 0.0, 0.0],
@@ -39,6 +44,11 @@ export class WebglScene {
     this.updateCamera();
 
     this.cubeList = [];
+    this.controlSettings = {
+      mouseSensitivity: controlSettings?.mouseSensitivity ?? 0.25,
+      wheelSensitivity: controlSettings?.wheelSensitivity ?? 0.001,
+      moveSpeed: controlSettings?.moveSpeed ?? 0.04,
+    };
 
     const gl = this.canvas.getContext('webgl2');
     if (!gl) throw new Error(`Не удалось создать контекст`);
@@ -83,16 +93,7 @@ export class WebglScene {
     this.WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
   }
 
-  private textureSize = 1.0;
-  private textureOffset = 0.0;
-
-  private getCubeBufferData(
-    texCoordU: number,
-    texCoordV: number,
-    texId: number,
-    color: vec3,
-    alpha = 1.0
-  ): Float32Array {
+  private getCubeBufferData(texId: number, color: vec3, alpha = 1.0): Float32Array {
     return new Float32Array([
       -0.5,
       -0.5,
@@ -101,8 +102,8 @@ export class WebglScene {
       color[1],
       color[2],
       alpha,
-      texCoordU * this.textureSize + 0.0 + this.textureOffset,
-      texCoordV * this.textureSize + 0.0 + this.textureOffset,
+      0.0,
+      1.0,
       texId,
       //
       -0.5,
@@ -112,8 +113,8 @@ export class WebglScene {
       color[1],
       color[2],
       alpha,
-      texCoordU * this.textureSize + 0.0 + this.textureOffset,
-      texCoordV * this.textureSize + this.textureSize - this.textureOffset,
+      1.0,
+      1.0,
       texId,
       //
       -0.5,
@@ -123,8 +124,8 @@ export class WebglScene {
       color[1],
       color[2],
       alpha,
-      texCoordU * this.textureSize + this.textureSize - this.textureOffset,
-      texCoordV * this.textureSize + 0.0 + this.textureOffset,
+      0.0,
+      0.0,
       texId,
       //
       -0.5,
@@ -134,8 +135,8 @@ export class WebglScene {
       color[1],
       color[2],
       alpha,
-      texCoordU * this.textureSize + this.textureSize - this.textureOffset,
-      texCoordV * this.textureSize + this.textureSize - this.textureOffset,
+      1.0,
+      0.0,
       texId,
       //
       0.5,
@@ -145,8 +146,8 @@ export class WebglScene {
       color[1],
       color[2],
       alpha,
-      texCoordU * this.textureSize + 0.0 + this.textureOffset,
-      texCoordV * this.textureSize + this.textureSize - this.textureOffset,
+      1.0,
+      1.0,
       texId,
       //
       0.5,
@@ -156,8 +157,8 @@ export class WebglScene {
       color[1],
       color[2],
       alpha,
-      texCoordU * this.textureSize + 0.0 + this.textureOffset,
-      texCoordV * this.textureSize + 0.0 + this.textureOffset,
+      0.0,
+      1.0,
       texId,
       //
       0.5,
@@ -167,8 +168,8 @@ export class WebglScene {
       color[1],
       color[2],
       alpha,
-      texCoordU * this.textureSize + this.textureSize - this.textureOffset,
-      texCoordV * this.textureSize + this.textureSize - this.textureOffset,
+      1.0,
+      0.0,
       texId,
       //
       0.5,
@@ -178,8 +179,8 @@ export class WebglScene {
       color[1],
       color[2],
       alpha,
-      texCoordU * this.textureSize + this.textureSize - this.textureOffset,
-      texCoordV * this.textureSize + 0.0 + this.textureOffset,
+      0.0,
+      0.0,
       texId,
       //
     ]);
@@ -225,7 +226,7 @@ export class WebglScene {
   }
 
   private getInitializedCubeVao(textureId: number, color: vec3, alpha?: number): WebGLVertexArrayObject {
-    const bufferData = this.getCubeBufferData(0.0, 0.0, textureId, color, alpha);
+    const bufferData = this.getCubeBufferData(textureId, color, alpha);
     const indicesBufferData = this.getCubeIndicesData();
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 10;
 
@@ -315,6 +316,9 @@ export class WebglScene {
     document.addEventListener('mousemove', event => {
       this.mousemoveCallback(event);
     });
+    document.addEventListener('wheel', event => {
+      this.wheelCallback(event);
+    });
   }
 
   private mousedownCallback(event: MouseEvent): void {
@@ -328,20 +332,25 @@ export class WebglScene {
   }
 
   private mousemoveCallback(event: MouseEvent): void {
-    const sensitivity = 0.25;
     if (this.mousePrevPosX !== undefined && this.mousePrevPosY !== undefined) {
       const mousedx = event.x - this.mousePrevPosX;
       const mousedy = event.y - this.mousePrevPosY;
       this.mousePrevPosX = event.x;
       this.mousePrevPosY = event.y;
 
-      if (mousedx !== 0) this.camera.phi += sensitivity * mousedx;
-      const newTheta = this.camera.theta - sensitivity * mousedy;
+      if (mousedx !== 0) this.camera.phi += this.controlSettings.mouseSensitivity * mousedx;
+      const newTheta = this.camera.theta - this.controlSettings.mouseSensitivity * mousedy;
       if (mousedy !== 0 && newTheta <= this.camera.maxTheta && newTheta >= this.camera.minTheta)
         this.camera.theta = newTheta;
 
       this.updateCamera();
     }
+  }
+
+  private wheelCallback(event: WheelEvent): void {
+    const newZoom = this.camera.zoom + event.deltaY * this.controlSettings.wheelSensitivity;
+    if (newZoom >= this.camera.minZoom && newZoom <= this.camera.maxZoom) this.camera.zoom = newZoom;
+    this.updateCamera();
   }
 
   private updateCamera(): void {
@@ -361,27 +370,26 @@ export class WebglScene {
   }
 
   private keyboardCallback(event: KeyboardEvent): void {
-    const speed = 0.03;
     switch (event.key.toLowerCase()) {
       case 'w': {
-        if (event.shiftKey) this.camera.center[1] += speed;
-        else this.camera.center[2] += speed;
+        if (event.shiftKey) this.camera.center[1] += this.controlSettings.moveSpeed;
+        else this.camera.center[2] += this.controlSettings.moveSpeed;
         this.updateCamera();
         break;
       }
       case 's': {
-        if (event.shiftKey) this.camera.center[1] -= speed;
-        else this.camera.center[2] -= speed;
+        if (event.shiftKey) this.camera.center[1] -= this.controlSettings.moveSpeed;
+        else this.camera.center[2] -= this.controlSettings.moveSpeed;
         this.updateCamera();
         break;
       }
       case 'a': {
-        this.camera.center[0] += speed;
+        this.camera.center[0] += this.controlSettings.moveSpeed;
         this.updateCamera();
         break;
       }
       case 'd': {
-        this.camera.center[0] -= speed;
+        this.camera.center[0] -= this.controlSettings.moveSpeed;
         this.updateCamera();
         break;
       }
@@ -393,29 +401,54 @@ export class WebglScene {
    * @param event
    */
   private keyboardInSpaceCallback(event: KeyboardEvent): void {
-    const speed = 0.03;
     switch (event.key.toLowerCase()) {
       case 'w': {
         if (event.shiftKey)
-          vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.up, speed));
-        else vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.front, speed));
+          vec3.add(
+            this.camera.center,
+            this.camera.center,
+            vec3.scale(vec3.create(), this.camera.up, this.controlSettings.moveSpeed)
+          );
+        else
+          vec3.add(
+            this.camera.center,
+            this.camera.center,
+            vec3.scale(vec3.create(), this.camera.front, this.controlSettings.moveSpeed)
+          );
         this.updateCamera();
         break;
       }
       case 's': {
         if (event.shiftKey)
-          vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.up, -speed));
-        else vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.front, -speed));
+          vec3.add(
+            this.camera.center,
+            this.camera.center,
+            vec3.scale(vec3.create(), this.camera.up, -this.controlSettings.moveSpeed)
+          );
+        else
+          vec3.add(
+            this.camera.center,
+            this.camera.center,
+            vec3.scale(vec3.create(), this.camera.front, -this.controlSettings.moveSpeed)
+          );
         this.updateCamera();
         break;
       }
       case 'a': {
-        vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.left, -speed));
+        vec3.add(
+          this.camera.center,
+          this.camera.center,
+          vec3.scale(vec3.create(), this.camera.left, -this.controlSettings.moveSpeed)
+        );
         this.updateCamera();
         break;
       }
       case 'd': {
-        vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.left, speed));
+        vec3.add(
+          this.camera.center,
+          this.camera.center,
+          vec3.scale(vec3.create(), this.camera.left, this.controlSettings.moveSpeed)
+        );
         this.updateCamera();
         break;
       }

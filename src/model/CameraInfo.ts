@@ -7,9 +7,11 @@ export interface CameraInfo {
   zoom: number;
   phi: number;
   theta: number;
-  // Два атрибута нужных для ограничения движений камеры
+  // Атрбитуы, ограничивающие движения камеры
   minTheta: number;
   maxTheta: number;
+  minZoom: number;
+  maxZoom: number;
   // Вторичные атрибуты камеры. Вручную НЕ устнавливать!
   // Вычисляются на основе первичных, нужны для уменьшения количества вычислений.
   position: vec3;
