@@ -3,9 +3,7 @@ import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
 import { CubeObject } from './model/CubeObject';
 // import imageUrl from './resources/cube-texture.jpg';
-// import imageUrl from './resources/Textures-16.png';
 import imageUrl from './resources/patternPack_tilesheet@2.png';
-import { TextureCoordinatesMap, TextureNameType } from './TextureCoordinatesMap';
 import { AttribLocations } from './model/AttribLocations';
 
 export class WebglScene {
@@ -20,22 +18,32 @@ export class WebglScene {
     canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
     private camera: CameraInfo = {
-      position: new Float32Array([0.0, 0.0, -1.5]),
+      position: new Float32Array([0.0, 0.0, 2.5]),
       front: new Float32Array([0.0, 0.0, 1.0]),
       up: new Float32Array([0.0, 1.0, 0.0]),
       zoom: 1.0,
     }
   ) {
     this.cubeList = [];
+
     const gl = canvas.getContext('webgl2');
     if (!gl) throw new Error(`Не удалось создать контекст`);
     this.gl = gl;
     const program = gl.createProgram();
     if (!program) throw new Error(`Не удалось создать программу`);
     this.program = program;
+
     this.gl.enable(this.gl.CULL_FACE);
     this.gl.cullFace(this.gl.FRONT);
+
     this.gl.enable(this.gl.DEPTH_TEST);
+    this.gl.depthFunc(this.gl.LEQUAL);
+
+    this.gl.enable(gl.BLEND);
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+
+    this.gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
 
   public addShader(shaderSource: string, shaderType: 'vertex' | 'fragment'): WebGLShader {
@@ -66,7 +74,7 @@ export class WebglScene {
   private textureSize = 1.0;
   private textureOffset = 0.0;
 
-  private getCubeBufferData(texCoordU: number, texCoordV: number, texId: number): Float32Array {
+  private getCubeBufferData(texCoordU: number, texCoordV: number, texId: number, alpha = 1.0): Float32Array {
     return new Float32Array([
       -0.5,
       -0.5,
@@ -74,6 +82,7 @@ export class WebglScene {
       0.2,
       0.2,
       0.2,
+      alpha,
       texCoordU * this.textureSize + 0.0 + this.textureOffset,
       texCoordV * this.textureSize + 0.0 + this.textureOffset,
       texId,
@@ -84,6 +93,7 @@ export class WebglScene {
       0.2,
       0.2,
       0.8,
+      alpha,
       texCoordU * this.textureSize + 0.0 + this.textureOffset,
       texCoordV * this.textureSize + this.textureSize - this.textureOffset,
       texId,
@@ -94,6 +104,7 @@ export class WebglScene {
       0.2,
       0.8,
       0.2,
+      alpha,
       texCoordU * this.textureSize + this.textureSize - this.textureOffset,
       texCoordV * this.textureSize + 0.0 + this.textureOffset,
       texId,
@@ -104,6 +115,7 @@ export class WebglScene {
       0.2,
       0.8,
       0.8,
+      alpha,
       texCoordU * this.textureSize + this.textureSize - this.textureOffset,
       texCoordV * this.textureSize + this.textureSize - this.textureOffset,
       texId,
@@ -114,6 +126,7 @@ export class WebglScene {
       0.8,
       0.2,
       0.2,
+      alpha,
       texCoordU * this.textureSize + 0.0 + this.textureOffset,
       texCoordV * this.textureSize + this.textureSize - this.textureOffset,
       texId,
@@ -124,6 +137,7 @@ export class WebglScene {
       0.8,
       0.2,
       0.8,
+      alpha,
       texCoordU * this.textureSize + 0.0 + this.textureOffset,
       texCoordV * this.textureSize + 0.0 + this.textureOffset,
       texId,
@@ -134,6 +148,7 @@ export class WebglScene {
       0.8,
       0.8,
       0.2,
+      alpha,
       texCoordU * this.textureSize + this.textureSize - this.textureOffset,
       texCoordV * this.textureSize + this.textureSize - this.textureOffset,
       texId,
@@ -144,6 +159,7 @@ export class WebglScene {
       0.8,
       0.8,
       0.8,
+      alpha,
       texCoordU * this.textureSize + this.textureSize - this.textureOffset,
       texCoordV * this.textureSize + 0.0 + this.textureOffset,
       texId,
@@ -186,19 +202,13 @@ export class WebglScene {
     z: number,
     size: number,
     rotation: number,
-    // textureName: TextureNameType,
     textureId: number,
+    alpha?: number,
     rotationSpeed?: number
   ) {
-    const bufferData = this.getCubeBufferData(
-      // TextureCoordinatesMap[textureName].u,
-      // TextureCoordinatesMap[textureName].v
-      0.0,
-      1.0,
-      textureId
-    );
+    const bufferData = this.getCubeBufferData(0.0, 1.0, textureId, alpha);
     const indicesBufferData = this.getCubeIndicesData();
-    const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 9;
+    const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 10;
 
     const vao = this.gl.createVertexArray();
     this.gl.bindVertexArray(vao);
@@ -221,7 +231,7 @@ export class WebglScene {
     );
     this.gl.vertexAttribPointer(
       this.attribLocs.color,
-      3,
+      4,
       this.gl.FLOAT,
       false,
       BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
@@ -233,7 +243,7 @@ export class WebglScene {
       this.gl.FLOAT,
       false,
       BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
-      6 * this.FLOAT_SIZE
+      7 * this.FLOAT_SIZE
     );
     this.gl.vertexAttribPointer(
       this.attribLocs.texId,
@@ -241,7 +251,7 @@ export class WebglScene {
       this.gl.FLOAT,
       false,
       BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
-      8 * this.FLOAT_SIZE
+      9 * this.FLOAT_SIZE
     );
     this.gl.enableVertexAttribArray(this.attribLocs.position);
     this.gl.enableVertexAttribArray(this.attribLocs.color);
@@ -271,11 +281,36 @@ export class WebglScene {
             -n / 2 + k * gap,
             size,
             0.0,
-            (i * n ** 2 + j * n + k) % (7 * 12)
+            (i * n ** 2 + j * n + k) % (7 * 12),
+            0.7
           );
         }
       }
     }
+  }
+
+  private getZprojection(position: vec3): number {
+    return vec3.dot(vec3.sub(vec3.create(), position, this.camera.position), this.camera.front);
+  }
+
+  private insertionSort<T>(list: T[], compare: (a: T, b: T) => number): void {
+    for (let i = 1; i < list.length; i++) {
+      let j = i - 1;
+      const curr = list[i];
+      while (j > -1 && compare(curr, list[j]) < 0) {
+        console.log('swapped');
+        list[j + 1] = list[j];
+        j--;
+      }
+      list[j + 1] = curr;
+    }
+  }
+
+  private sortCubes(): void {
+    // Сортировать нужно по расстоянию от камеры...... вдоль оси перпендикулярной плоскости вьюпорта.
+    // + Нужно сортировать вставками, а не быстрой сортировкой
+    this.insertionSort(this.cubeList, (a, b) => this.getZprojection(a.position) - this.getZprojection(b.position));
+    // this.cubeList.sort((a, b) => this.getZprojection(b.position) - this.getZprojection(a.position));
   }
 
   public startLoop(): void {
@@ -324,7 +359,7 @@ export class WebglScene {
           0,
           0,
           0,
-          i* columnCount + j,
+          i * columnCount + j,
           tileSize,
           tileSize,
           1,
@@ -363,6 +398,8 @@ export class WebglScene {
   }
 
   private draw(): void {
+    this.sortCubes();
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     for (const cube of this.cubeList) {
       cube.rotation += cube.speedRotation;
       this.gl.bindVertexArray(cube.vao);
