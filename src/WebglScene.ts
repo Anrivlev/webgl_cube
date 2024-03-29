@@ -1,4 +1,4 @@
-import { mat4, vec3 } from 'gl-matrix';
+import { mat3, mat4, vec3 } from 'gl-matrix';
 import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
 import { CubeObject } from './model/CubeObject';
@@ -17,6 +17,8 @@ export class WebglScene {
   private mousePrevPosX: number | undefined;
   private mousePrevPosY: number | undefined;
 
+  private player?: CubeObject;
+
   constructor(
     private canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
@@ -24,15 +26,15 @@ export class WebglScene {
   ) {
     this.camera = {
       center: camera?.center ?? [0.0, 0.0, 0.0],
-      phi: camera?.phi ?? -90.0,
-      theta: camera?.theta ?? 80.0,
+      phi: camera?.phi ?? 0.0,
+      theta: camera?.theta ?? 20.0,
       zoom: camera?.zoom ?? 1.0,
-      minTheta: camera?.minTheta ?? 10.0,
-      maxTheta: camera?.maxTheta ?? 80.0,
+      minTheta: camera?.minTheta ?? 0.0,
+      maxTheta: camera?.maxTheta ?? 180.0,
       position: [0.0, 0.0, 0.0],
       front: [0.0, 0.0, 0.0],
       up: [0.0, 0.0, 0.0],
-      right: [0.0, 0.0, 0.0],
+      left: [0.0, 0.0, 0.0],
     };
     this.updateCamera();
 
@@ -206,16 +208,17 @@ export class WebglScene {
     ]);
   }
 
-  public addCube(
-    x: number,
-    y: number,
-    z: number,
-    size: number,
-    rotation: number,
-    textureId: number,
-    alpha?: number,
-    rotationSpeed?: number
-  ) {
+  public addPlayer(size: number, textureId: number = 74) {
+    this.player = {
+      vao: this.getInitializedCubeVao(textureId, 1.0),
+      position: this.camera.center,
+      size: size,
+      rotation: 0.0,
+      speedRotation: 0.0,
+    };
+  }
+
+  private getInitializedCubeVao(textureId: number, alpha?: number): WebGLVertexArrayObject {
     const bufferData = this.getCubeBufferData(0.0, 0.0, textureId, alpha);
     const indicesBufferData = this.getCubeIndicesData();
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 10;
@@ -268,9 +271,22 @@ export class WebglScene {
     this.gl.enableVertexAttribArray(this.attribLocs.texCoord);
     this.gl.enableVertexAttribArray(this.attribLocs.texId);
     this.gl.bindVertexArray(null);
+    return vao;
+  }
+
+  public addCube(
+    x: number,
+    y: number,
+    z: number,
+    size: number,
+    rotation: number,
+    textureId: number,
+    alpha?: number,
+    rotationSpeed?: number
+  ): void {
     this.cubeList.push({
-      vao: vao,
-      position: new Float32Array([x, y, z]),
+      vao: this.getInitializedCubeVao(textureId, alpha),
+      position: [x, y, z],
       size: size,
       rotation: rotation,
       speedRotation: rotationSpeed ?? this.getRandomArbitrary(-0.05, 0.05),
@@ -283,7 +299,7 @@ export class WebglScene {
 
   public enableControls(): void {
     document.addEventListener('keydown', event => {
-      this.keyboardCallback(event);
+      this.keyboardInSpaceCallback(event);
     });
     document.addEventListener('mousedown', event => {
       this.mousedownCallback(event);
@@ -329,15 +345,14 @@ export class WebglScene {
     const sinp = Math.sin((this.camera.phi * Math.PI) / 180.0);
     const cosp = Math.cos((this.camera.phi * Math.PI) / 180.0);
 
-    const x = this.camera.zoom * cost;
-    const y = this.camera.zoom * sint * cosp;
+    const x = this.camera.zoom * sint * cosp;
+    const y = this.camera.zoom * cost;
     const z = this.camera.zoom * sint * sinp;
     this.camera.position = vec3.add(this.camera.position, this.camera.center, [x, y, z]);
 
     this.camera.front = vec3.normalize(this.camera.front, [-sint * cosp, -cost, -sint * sinp]);
     this.camera.up = vec3.normalize(this.camera.up, [-cost * cosp, sint, -cost * sinp]);
-    this.camera.right = vec3.normalize(this.camera.right, [sinp, 0, -cosp]);
-    console.log(this.camera);
+    this.camera.left = vec3.normalize(this.camera.left, [sinp, 0, -cosp]);
   }
 
   private keyboardCallback(event: KeyboardEvent): void {
@@ -384,18 +399,18 @@ export class WebglScene {
       }
       case 's': {
         if (event.shiftKey)
-          vec3.sub(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.up, speed));
-        else vec3.sub(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.front, speed));
+          vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.up, -speed));
+        else vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.front, -speed));
         this.updateCamera();
         break;
       }
       case 'a': {
-        vec3.sub(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.right, speed));
+        vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.left, -speed));
         this.updateCamera();
         break;
       }
       case 'd': {
-        vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.right, speed));
+        vec3.add(this.camera.center, this.camera.center, vec3.scale(vec3.create(), this.camera.left, speed));
         this.updateCamera();
         break;
       }
@@ -543,42 +558,66 @@ export class WebglScene {
       this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
       this.gl.bindVertexArray(null);
     }
-    // this.draw();
+    if (this.player) {
+      this.gl.bindVertexArray(this.player.vao);
+      const WVPm: mat4 = mat4.mul(
+        mat4.create(),
+        mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
+        this.getTransformMatrix(this.player.size, this.player.position, this.player.rotation)
+      );
+      this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
+      this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
+      this.gl.bindVertexArray(null);
+    }
     window.requestAnimationFrame(this.draw.bind(this));
-    // setTimeout(() => this.draw(), 1000 / 60);
   }
 
   public getProjectionMatrix(): mat4 {
     const r = this.canvas.width / this.canvas.height;
-    // const f = 1 / Math.tan(this.vp.fov / 2);
-    // const a = (this.vp.far + this.vp.near) / (this.vp.far - this.vp.near);
-    // const b = (2 * this.vp.far * this.vp.near) / (this.vp.far - this.vp.near);
-    // return new Float32Array([f / r, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, a, b, 0.0, 0.0, 1.0, 0.0]);
-    return mat4.perspective(mat4.create(), (this.vp.fov * Math.PI) / 180, r, this.vp.near, this.vp.far);
+    const f = 1 / Math.tan(this.vp.fov / 2);
+    const a = (this.vp.far + this.vp.near) / (this.vp.far - this.vp.near);
+    const b = (-2 * this.vp.far * this.vp.near) / (this.vp.far - this.vp.near);
+    return mat4.transpose(mat4.create(), [
+      f / r,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      f,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -a,
+      b,
+      0.0,
+      0.0,
+      -1.0,
+      0.0,
+    ]);
   }
 
   public getCameraViewMatrix(): mat4 {
-    // const N = this.camera.front;
-    // const V = this.camera.up;
-    // const U = vec3.cross(vec3.create(), N, V);
-    // return new Float32Array([
-    //   U[0],
-    //   U[1],
-    //   U[2],
-    //   vec3.dot(vec3.negate(vec3.create(), U), this.camera.position),
-    //   V[0],
-    //   V[1],
-    //   V[2],
-    //   vec3.dot(vec3.negate(vec3.create(), V), this.camera.position),
-    //   N[0],
-    //   N[1],
-    //   N[2],
-    //   vec3.dot(N, this.camera.position),
-    //   0.0,
-    //   0.0,
-    //   0.0,
-    //   1.0,
-    // ]);
-    return mat4.lookAt(mat4.create(), this.camera.position, this.camera.center, this.camera.up);
+    const N = this.camera.front;
+    const V = this.camera.up;
+    const U = this.camera.left;
+    return mat4.transpose(mat4.create(), [
+      U[0],
+      U[1],
+      U[2],
+      vec3.dot(vec3.negate(vec3.create(), U), this.camera.position),
+      V[0],
+      V[1],
+      V[2],
+      vec3.dot(vec3.negate(vec3.create(), V), this.camera.position),
+      -N[0],
+      -N[1],
+      -N[2],
+      vec3.dot(N, this.camera.position),
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+    ]);
   }
 }

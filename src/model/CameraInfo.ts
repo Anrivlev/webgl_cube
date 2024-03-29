@@ -15,5 +15,5 @@ export interface CameraInfo {
   position: vec3;
   up: vec3;
   front: vec3;
-  right: vec3;
+  left: vec3;
 }
