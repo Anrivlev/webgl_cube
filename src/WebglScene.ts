@@ -251,8 +251,6 @@ export class WebglScene {
   }
 
   public startLoop(): void {
-    this.addNCubedCubesAtOrigin(6, 1, 0.25);
-
     const image = new Image();
     image.src = imageUrl;
     image.onload = () => this.setTexture(image);
