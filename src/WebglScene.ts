@@ -57,7 +57,7 @@ export class WebglScene {
   }
 
   private textureSize = 16 / 512;
-  private textureOffset = 1 /512 / 2;
+  private textureOffset = 1 / 512 / 2;
 
   private getCubeBufferData(textureOriginCoordIntU: number, textureOriginCoordIntV: number): Float32Array {
     return new Float32Array([
@@ -243,7 +243,7 @@ export class WebglScene {
             -n / 2 + k * gap,
             size,
             0.0,
-            `${95 + i + j + k + 1}` as TextureNameType
+            `${i * n ** 2 + j * n + k + 1}` as TextureNameType
           );
         }
       }
@@ -274,8 +274,9 @@ export class WebglScene {
       this.gl.UNSIGNED_BYTE,
       image
     );
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
     this.gl.generateMipmap(this.gl.TEXTURE_2D);
-    this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR_MIPMAP_LINEAR);
   }
 
   private getTransformMatrix(scale: number, translation: vec3, angle: number): mat4 {
