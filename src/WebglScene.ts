@@ -33,8 +33,8 @@ export class WebglScene {
     if (!program) throw new Error(`Не удалось создать программу`);
     this.program = program;
 
-    // this.gl.enable(this.gl.CULL_FACE);
-    // this.gl.cullFace(this.gl.FRONT);
+    this.gl.enable(this.gl.CULL_FACE);
+    this.gl.cullFace(this.gl.FRONT);
 
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.depthFunc(this.gl.LEQUAL);
@@ -272,15 +272,16 @@ export class WebglScene {
   }
 
   public keyboardCallback(event: KeyboardEvent): void {
-    console.log('event fired!');
-    const speed = 0.02;
-    switch(event.key) {
+    const speed = 0.03;
+    switch (event.key.toLowerCase()) {
       case 'w': {
-        this.camera.position[2] += speed;
+        if (event.shiftKey) this.camera.position[1] += speed;
+        else this.camera.position[2] += speed;
         break;
       }
       case 's': {
-        this.camera.position[2] -= speed;
+        if (event.shiftKey) this.camera.position[1] -= speed;
+        else this.camera.position[2] -= speed;
         break;
       }
       case 'a': {
@@ -435,7 +436,9 @@ export class WebglScene {
       this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
       this.gl.bindVertexArray(null);
     }
-    setTimeout(() => this.draw(), 1000 / 60);
+    // this.draw();
+    window.requestAnimationFrame(this.draw.bind(this));
+    // setTimeout(() => this.draw(), 1000 / 60);
   }
 
   public getProjectionMatrix(): mat4 {
