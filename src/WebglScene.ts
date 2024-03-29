@@ -86,14 +86,20 @@ export class WebglScene {
   private textureSize = 1.0;
   private textureOffset = 0.0;
 
-  private getCubeBufferData(texCoordU: number, texCoordV: number, texId: number, alpha = 1.0): Float32Array {
+  private getCubeBufferData(
+    texCoordU: number,
+    texCoordV: number,
+    texId: number,
+    color: vec3,
+    alpha = 1.0
+  ): Float32Array {
     return new Float32Array([
       -0.5,
       -0.5,
       -0.5,
-      0.2,
-      0.2,
-      0.2,
+      color[0],
+      color[1],
+      color[2],
       alpha,
       texCoordU * this.textureSize + 0.0 + this.textureOffset,
       texCoordV * this.textureSize + 0.0 + this.textureOffset,
@@ -102,9 +108,9 @@ export class WebglScene {
       -0.5,
       -0.5,
       0.5,
-      0.2,
-      0.2,
-      0.8,
+      color[0],
+      color[1],
+      color[2],
       alpha,
       texCoordU * this.textureSize + 0.0 + this.textureOffset,
       texCoordV * this.textureSize + this.textureSize - this.textureOffset,
@@ -113,9 +119,9 @@ export class WebglScene {
       -0.5,
       0.5,
       -0.5,
-      0.2,
-      0.8,
-      0.2,
+      color[0],
+      color[1],
+      color[2],
       alpha,
       texCoordU * this.textureSize + this.textureSize - this.textureOffset,
       texCoordV * this.textureSize + 0.0 + this.textureOffset,
@@ -124,9 +130,9 @@ export class WebglScene {
       -0.5,
       0.5,
       0.5,
-      0.2,
-      0.8,
-      0.8,
+      color[0],
+      color[1],
+      color[2],
       alpha,
       texCoordU * this.textureSize + this.textureSize - this.textureOffset,
       texCoordV * this.textureSize + this.textureSize - this.textureOffset,
@@ -135,9 +141,9 @@ export class WebglScene {
       0.5,
       -0.5,
       -0.5,
-      0.8,
-      0.2,
-      0.2,
+      color[0],
+      color[1],
+      color[2],
       alpha,
       texCoordU * this.textureSize + 0.0 + this.textureOffset,
       texCoordV * this.textureSize + this.textureSize - this.textureOffset,
@@ -146,9 +152,9 @@ export class WebglScene {
       0.5,
       -0.5,
       0.5,
-      0.8,
-      0.2,
-      0.8,
+      color[0],
+      color[1],
+      color[2],
       alpha,
       texCoordU * this.textureSize + 0.0 + this.textureOffset,
       texCoordV * this.textureSize + 0.0 + this.textureOffset,
@@ -157,9 +163,9 @@ export class WebglScene {
       0.5,
       0.5,
       -0.5,
-      0.8,
-      0.8,
-      0.2,
+      color[0],
+      color[1],
+      color[2],
       alpha,
       texCoordU * this.textureSize + this.textureSize - this.textureOffset,
       texCoordV * this.textureSize + this.textureSize - this.textureOffset,
@@ -168,9 +174,9 @@ export class WebglScene {
       0.5,
       0.5,
       0.5,
-      0.8,
-      0.8,
-      0.8,
+      color[0],
+      color[1],
+      color[2],
       alpha,
       texCoordU * this.textureSize + this.textureSize - this.textureOffset,
       texCoordV * this.textureSize + 0.0 + this.textureOffset,
@@ -210,7 +216,7 @@ export class WebglScene {
 
   public addPlayer(size: number, textureId: number = 74) {
     this.player = {
-      vao: this.getInitializedCubeVao(textureId, 1.0),
+      vao: this.getInitializedCubeVao(textureId, [1.0, 1.0, 1.0], 1.0),
       position: this.camera.center,
       size: size,
       rotation: 0.0,
@@ -218,8 +224,8 @@ export class WebglScene {
     };
   }
 
-  private getInitializedCubeVao(textureId: number, alpha?: number): WebGLVertexArrayObject {
-    const bufferData = this.getCubeBufferData(0.0, 0.0, textureId, alpha);
+  private getInitializedCubeVao(textureId: number, color: vec3, alpha?: number): WebGLVertexArrayObject {
+    const bufferData = this.getCubeBufferData(0.0, 0.0, textureId, color, alpha);
     const indicesBufferData = this.getCubeIndicesData();
     const BUFFER_DATA_SINGLE_ELEMENT_SIZE = 10;
 
@@ -275,18 +281,17 @@ export class WebglScene {
   }
 
   public addCube(
-    x: number,
-    y: number,
-    z: number,
+    position: vec3,
     size: number,
     rotation: number,
     textureId: number,
+    color: vec3,
     alpha?: number,
     rotationSpeed?: number
   ): void {
     this.cubeList.push({
-      vao: this.getInitializedCubeVao(textureId, alpha),
-      position: [x, y, z],
+      vao: this.getInitializedCubeVao(textureId, color, alpha),
+      position: position,
       size: size,
       rotation: rotation,
       speedRotation: rotationSpeed ?? this.getRandomArbitrary(-0.05, 0.05),
@@ -422,12 +427,11 @@ export class WebglScene {
       for (let j = 0; j < n; j++) {
         for (let k = 0; k < n; k++) {
           this.addCube(
-            -n / 2 + i * gap,
-            -n / 2 + j * gap,
-            -n / 2 + k * gap,
+            [-n / 2 + i * gap, -n / 2 + j * gap, -n / 2 + k * gap],
             size,
             0.0,
             (i * n ** 2 + j * n + k) % (7 * 12),
+            [i / n, j / n, k / n],
             0.7
           );
         }
@@ -545,6 +549,17 @@ export class WebglScene {
   private draw(): void {
     this.sortCubes();
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    if (this.player) {
+      this.gl.bindVertexArray(this.player.vao);
+      const WVPm: mat4 = mat4.mul(
+        mat4.create(),
+        mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
+        this.getTransformMatrix(this.player.size, this.player.position, this.player.rotation)
+      );
+      this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
+      this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
+      this.gl.bindVertexArray(null);
+    }
     for (const cube of this.cubeList) {
       cube.rotation += cube.speedRotation;
       this.gl.bindVertexArray(cube.vao);
@@ -555,17 +570,6 @@ export class WebglScene {
       );
       this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
 
-      this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
-      this.gl.bindVertexArray(null);
-    }
-    if (this.player) {
-      this.gl.bindVertexArray(this.player.vao);
-      const WVPm: mat4 = mat4.mul(
-        mat4.create(),
-        mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
-        this.getTransformMatrix(this.player.size, this.player.position, this.player.rotation)
-      );
-      this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
       this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
       this.gl.bindVertexArray(null);
     }
