@@ -13,7 +13,7 @@ declare module '*.fs' {
   export default value;
 }
 
-declare module '*.module.scss';
+declare module '*.scss';
 
 declare module '*.jpg' {
   const value: string;

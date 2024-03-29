@@ -42,7 +42,7 @@ export class WebglScene {
     this.gl.enable(gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
 
-    this.gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
 
@@ -308,7 +308,7 @@ export class WebglScene {
   private sortCubes(): void {
     // Сортировать нужно по расстоянию от камеры...... вдоль оси перпендикулярной плоскости вьюпорта.
     // + Нужно сортировать вставками, а не быстрой сортировкой
-    this.insertionSort(this.cubeList, (a, b) => this.getZprojection(a.position) - this.getZprojection(b.position));
+    this.insertionSort(this.cubeList, (a, b) => this.getZprojection(b.position) - this.getZprojection(a.position));
     // this.cubeList.sort((a, b) => this.getZprojection(b.position) - this.getZprojection(a.position));
   }
 
@@ -421,7 +421,7 @@ export class WebglScene {
     // const a = (this.vp.far + this.vp.near) / (this.vp.far - this.vp.near);
     // const b = (2 * this.vp.far * this.vp.near) / (this.vp.far - this.vp.near);
     // return new Float32Array([f / r, 0.0, 0.0, 0.0, 0.0, f, 0.0, 0.0, 0.0, 0.0, a, b, 0.0, 0.0, 1.0, 0.0]);
-    return mat4.perspective(mat4.create(), this.vp.fov * Math.PI / 180, r, this.vp.near, this.vp.far);
+    return mat4.perspective(mat4.create(), (this.vp.fov * Math.PI) / 180, r, this.vp.near, this.vp.far);
   }
 
   public getCameraViewMatrix(): mat4 {
