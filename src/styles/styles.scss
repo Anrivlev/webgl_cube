@@ -1,8 +1,13 @@
 body {
+  position: absolute;
   margin: 0px;
   display: flex;
   justify-content: center;
   align-items: center;
+  bottom: 0px;
+  top: 0px;
+  left: 0px;
+  right: 0px;
 }
 .main-canvas {
 }

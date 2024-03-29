@@ -4,8 +4,13 @@ import './styles/styles.scss';
 
 import { WebglScene } from './WebglScene';
 
-const canvas = document.querySelector('canvas');
+const canvas = document.createElement('canvas');
+// const canvas = document.querySelector('canvas');
 if (!canvas) throw new Error(`Нет html-элемента canvas`);
+const body = document.querySelector('body');
+canvas.width = body.getBoundingClientRect().width;
+canvas.height = body.getBoundingClientRect().height;
+body.appendChild(canvas);
 
 const webglScene = new WebglScene(canvas, {
   width: canvas.width,
