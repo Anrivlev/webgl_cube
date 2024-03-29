@@ -46,7 +46,7 @@ export class WebglScene {
     this.cubeList = [];
     this.controlSettings = {
       mouseSensitivity: controlSettings?.mouseSensitivity ?? 0.25,
-      wheelSensitivity: controlSettings?.wheelSensitivity ?? 0.001,
+      wheelSensitivity: controlSettings?.wheelSensitivity ?? 0.005,
       moveSpeed: controlSettings?.moveSpeed ?? 0.04,
     };
 
