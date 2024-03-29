@@ -18,10 +18,14 @@ export class WebglScene {
     private canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
     private camera: CameraInfo = {
-      position: new Float32Array([0.0, 0.0, -3.5]),
-      front: new Float32Array([0.0, 0.0, 1.0]),
-      up: new Float32Array([0.0, 1.0, 0.0]),
+      center: [0.0, 0.0, 0.0],
+      phi: -90.0,
+      theta: 90.0,
       zoom: 1.0,
+
+      position: [0.0, 0.0, -1.0],
+      front: [0.0, 0.0, 1.0],
+      up: [0.0, 1.0, 0.0],
     }
   ) {
     this.cubeList = [];
@@ -271,25 +275,75 @@ export class WebglScene {
     return Math.random() * (max - min) + min;
   }
 
-  public keyboardCallback(event: KeyboardEvent): void {
+  private cameraPrevPosX = -1;
+  private cameraPrevPosY = -1;
+
+  public enableControls(): void {
+    document.addEventListener('keydown', event => {
+      this.keyboardCallback(event);
+    });
+    document.addEventListener('mousedown', event => {
+      this.mousedownCallback(event);
+    });
+    document.addEventListener('mouseup', event => {
+      this.mouseupCallback(event);
+    });
+    document.addEventListener('mousemove', event => {
+      this.mousemoveCallback(event);
+    });
+  }
+
+  private mousedownCallback(event: MouseEvent): void {
+    this.cameraPrevPosX = event.x;
+    this.cameraPrevPosY = event.y;
+  }
+
+  private mouseupCallback(event: MouseEvent): void {
+    this.cameraPrevPosX = -1;
+    this.cameraPrevPosY = -1;
+  }
+
+  private mousemoveCallback(event: MouseEvent): void {}
+
+  private updateCamera(): void {
+    const sint = Math.sin((this.camera.theta * Math.PI) / 180.0);
+    const cost = Math.cos((this.camera.theta * Math.PI) / 180.0);
+    const sinp = Math.sin((this.camera.phi * Math.PI) / 180.0);
+    const cosp = Math.cos((this.camera.phi * Math.PI) / 180.0);
+
+    const x = this.camera.zoom * cost;
+    const y = this.camera.zoom * sint * cosp;
+    const z = this.camera.zoom * sint * sinp;
+    this.camera.position = vec3.add(this.camera.position, this.camera.center, [x, y, z]);
+
+    this.camera.front = vec3.normalize(this.camera.front, [-sint * cosp, -cost, -sint * sinp]);
+    this.camera.up = vec3.normalize(this.camera.up, [-cost * cosp, sint, -cost * sinp]);
+    console.log(this.camera);
+  }
+
+  private keyboardCallback(event: KeyboardEvent): void {
     const speed = 0.03;
     switch (event.key.toLowerCase()) {
       case 'w': {
-        if (event.shiftKey) this.camera.position[1] += speed;
-        else this.camera.position[2] += speed;
+        if (event.shiftKey) this.camera.center[1] += speed;
+        else this.camera.center[2] += speed;
+        this.updateCamera();
         break;
       }
       case 's': {
-        if (event.shiftKey) this.camera.position[1] -= speed;
-        else this.camera.position[2] -= speed;
+        if (event.shiftKey) this.camera.center[1] -= speed;
+        else this.camera.center[2] -= speed;
+        this.updateCamera();
         break;
       }
       case 'a': {
-        this.camera.position[0] += speed;
+        this.camera.center[0] += speed;
+        this.updateCamera();
         break;
       }
       case 'd': {
-        this.camera.position[0] -= speed;
+        this.camera.center[0] -= speed;
+        this.updateCamera();
         break;
       }
     }
@@ -472,11 +526,6 @@ export class WebglScene {
     //   0.0,
     //   1.0,
     // ]);
-    return mat4.lookAt(
-      mat4.create(),
-      this.camera.position,
-      vec3.add(vec3.create(), this.camera.position, vec3.scale(vec3.create(), this.camera.front, this.camera.zoom)),
-      this.camera.up
-    );
+    return mat4.lookAt(mat4.create(), this.camera.position, this.camera.center, this.camera.up);
   }
 }
