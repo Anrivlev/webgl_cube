@@ -13,6 +13,8 @@ export class WebglScene {
   private cubeList: CubeObject[];
   private attribLocs?: AttribLocations;
   private WVPLoc: WebGLUniformLocation;
+  private uLightDirectionLoc: WebGLUniformLocation;
+  private lightDirection: vec3;
   private camera: CameraInfo;
 
   private mousePrevPosX: number | undefined;
@@ -25,7 +27,8 @@ export class WebglScene {
     private canvas: HTMLCanvasElement,
     private vp: ViewportInfo,
     camera?: Partial<CameraInfo>,
-    controlSettings?: Partial<ControlSettings>
+    controlSettings?: Partial<ControlSettings>,
+    lightDirection?: vec3
   ) {
     this.camera = {
       center: camera?.center ?? [0.0, 0.0, 0.0],
@@ -42,6 +45,9 @@ export class WebglScene {
       left: [0.0, 0.0, 0.0],
     };
     this.updateCamera();
+    this.lightDirection = lightDirection
+      ? vec3.normalize(vec3.create(), lightDirection)
+      : vec3.normalize(vec3.create(), [0.0, 0.2, 0.8]);
 
     this.cubeList = [];
     this.controlSettings = {
@@ -91,6 +97,7 @@ export class WebglScene {
       texId: this.gl.getAttribLocation(this.program, 'aTexId'),
     };
     this.WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
+    this.uLightDirectionLoc = this.gl.getUniformLocation(this.program, 'uLightDirectionLoc');
   }
 
   private getCubeBufferData(texId: number, color: vec3, alpha = 1.0): Float32Array {
@@ -105,6 +112,7 @@ export class WebglScene {
       0.0,
       1.0,
       texId,
+      
       //
       -0.5,
       -0.5,
@@ -582,6 +590,7 @@ export class WebglScene {
   private draw(): void {
     this.sortCubes();
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    this.gl.uniform3fv(this.uLightDirectionLoc, this.lightDirection);
     if (this.player) {
       this.gl.bindVertexArray(this.player.vao);
       const WVPm: mat4 = mat4.mul(
