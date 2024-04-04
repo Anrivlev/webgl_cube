@@ -9,9 +9,12 @@ uniform sampler2DArray uSampler;
 in vec4 vColor;
 in vec2 vTexCoord;
 in float vTexId;
+in float vBrightness;
 
 out vec4 fragColor;
 
 void main() {
-    fragColor = vColor * texture(uSampler, vec3(vTexCoord, vTexId));
+    vec4 baseColor = vColor * texture(uSampler, vec3(vTexCoord, vTexId));
+    fragColor = baseColor * 0.2f + vBrightness * baseColor * 0.8f;
+    fragColor.a = vColor.w;
 }
