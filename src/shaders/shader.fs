@@ -15,6 +15,7 @@ out vec4 fragColor;
 
 void main() {
     vec4 baseColor = vColor * texture(uSampler, vec3(vTexCoord, vTexId));
-    fragColor = baseColor * 0.2f + vBrightness * baseColor * 0.8f;
-    fragColor.a = vColor.w;
+    fragColor = baseColor * 0.1f + vBrightness * baseColor * 0.9f;
+    // fragColor.w = vColor.w;
+    fragColor.w = 1.0;
 }

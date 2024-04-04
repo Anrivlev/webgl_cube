@@ -12,6 +12,7 @@ out float vTexId;
 out float vBrightness;
 
 uniform mat4 WVP;
+uniform mat4 uModelTransform;
 uniform vec3 uLightDirection;
 
 void main() {
@@ -19,5 +20,5 @@ void main() {
     vColor = aColor;
     vTexCoord = aTexCoord;
     vTexId = aTexId;
-    vBrightness = max(dot(uLightDirection, aNormal), 0.0f);
+    vBrightness = max(dot(uLightDirection, normalize(mat3(uModelTransform) * aNormal)), 0.0f);
 }

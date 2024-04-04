@@ -3,4 +3,5 @@ export interface AttribLocations {
   position: number;
   color: number;
   texCoord: number;
+  normal: number;
 }
