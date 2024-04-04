@@ -9,7 +9,9 @@ in vec3 aNormal;
 out vec4 vColor;
 out vec2 vTexCoord;
 out float vTexId;
-out float vBrightness;
+out float vDiffuse;
+out vec3 vNormal;
+out vec3 vPosition;
 
 uniform mat4 WVP;
 uniform mat4 uModelTransform;
@@ -17,8 +19,10 @@ uniform vec3 uLightDirection;
 
 void main() {
     gl_Position = WVP * vec4(aPosition, 1.0f);
+    vPosition = vec3(gl_Position);
     vColor = aColor;
     vTexCoord = aTexCoord;
     vTexId = aTexId;
-    vBrightness = max(dot(uLightDirection, normalize(mat3(uModelTransform) * aNormal)), 0.0f);
+    vNormal = aNormal;
+    vDiffuse = max(dot(uLightDirection, normalize(mat3(uModelTransform) * aNormal)), 0.0f);
 }

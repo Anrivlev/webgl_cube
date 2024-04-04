@@ -3,7 +3,7 @@ import { ViewportInfo } from './model/ViewportInfo';
 import { CameraInfo } from './model/CameraInfo';
 import { CubeObject } from './model/CubeObject';
 import imageUrl from './resources/patternPack_tilesheet@2.png';
-import { AttribLocations } from './model/AttribLocations';
+import { AttribAndUniformLocations } from './model/AttribLocations';
 import { ControlSettings } from './model/ControlSettings';
 
 export class WebglScene {
@@ -11,10 +11,7 @@ export class WebglScene {
   private program: WebGLProgram;
   private FLOAT_SIZE = 4;
   private cubeList: CubeObject[];
-  private attribLocs?: AttribLocations;
-  private WVPLoc: WebGLUniformLocation;
-  private uModelTransformLoc: WebGLUniformLocation;
-  private uLightDirectionLoc: WebGLUniformLocation;
+  private locations?: AttribAndUniformLocations;
   private lightDirection: vec3;
   private camera: CameraInfo;
 
@@ -91,16 +88,17 @@ export class WebglScene {
     this.gl.linkProgram(this.program);
     this.gl.useProgram(this.program);
 
-    this.attribLocs = {
+    this.locations = {
       position: this.gl.getAttribLocation(this.program, 'aPosition'),
       color: this.gl.getAttribLocation(this.program, 'aColor'),
       texCoord: this.gl.getAttribLocation(this.program, 'aTexCoord'),
       texId: this.gl.getAttribLocation(this.program, 'aTexId'),
       normal: this.gl.getAttribLocation(this.program, 'aNormal'),
+      WVP: this.gl.getUniformLocation(this.program, 'WVP'),
+      modelTransform: this.gl.getUniformLocation(this.program, 'uModelTransform'),
+      lightDirection: this.gl.getUniformLocation(this.program, 'uLightDirection'),
+      lightPosition: this.gl.getUniformLocation(this.program, 'uLightPosition'),
     };
-    this.WVPLoc = this.gl.getUniformLocation(this.program, 'WVP');
-    this.uLightDirectionLoc = this.gl.getUniformLocation(this.program, 'uLightDirection');
-    this.uModelTransformLoc = this.gl.getUniformLocation(this.program, 'uModelTransform');
   }
 
   private getCubeBufferData(texId: number, color: vec3, alpha = 1.0): Float32Array {
@@ -500,7 +498,7 @@ export class WebglScene {
     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indicesBufferData, this.gl.STATIC_DRAW);
 
     this.gl.vertexAttribPointer(
-      this.attribLocs.position,
+      this.locations.position,
       3,
       this.gl.FLOAT,
       false,
@@ -508,7 +506,7 @@ export class WebglScene {
       0
     );
     this.gl.vertexAttribPointer(
-      this.attribLocs.color,
+      this.locations.color,
       4,
       this.gl.FLOAT,
       false,
@@ -516,7 +514,7 @@ export class WebglScene {
       3 * this.FLOAT_SIZE
     );
     this.gl.vertexAttribPointer(
-      this.attribLocs.texCoord,
+      this.locations.texCoord,
       2,
       this.gl.FLOAT,
       false,
@@ -524,7 +522,7 @@ export class WebglScene {
       7 * this.FLOAT_SIZE
     );
     this.gl.vertexAttribPointer(
-      this.attribLocs.texId,
+      this.locations.texId,
       1,
       this.gl.FLOAT,
       false,
@@ -532,18 +530,18 @@ export class WebglScene {
       9 * this.FLOAT_SIZE
     );
     this.gl.vertexAttribPointer(
-      this.attribLocs.normal,
+      this.locations.normal,
       3,
       this.gl.FLOAT,
       false,
       BUFFER_DATA_SINGLE_ELEMENT_SIZE * this.FLOAT_SIZE,
       10 * this.FLOAT_SIZE
     );
-    this.gl.enableVertexAttribArray(this.attribLocs.position);
-    this.gl.enableVertexAttribArray(this.attribLocs.color);
-    this.gl.enableVertexAttribArray(this.attribLocs.texCoord);
-    this.gl.enableVertexAttribArray(this.attribLocs.texId);
-    this.gl.enableVertexAttribArray(this.attribLocs.normal);
+    this.gl.enableVertexAttribArray(this.locations.position);
+    this.gl.enableVertexAttribArray(this.locations.color);
+    this.gl.enableVertexAttribArray(this.locations.texCoord);
+    this.gl.enableVertexAttribArray(this.locations.texId);
+    this.gl.enableVertexAttribArray(this.locations.normal);
     this.gl.bindVertexArray(null);
     return vao;
   }
@@ -849,6 +847,7 @@ export class WebglScene {
   private draw(): void {
     this.sortCubes();
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    this.gl.uniform3fv(this.locations.lightDirection, this.lightDirection);
     if (this.player) {
       this.gl.bindVertexArray(this.player.vao);
       const modelTransform: mat4 = this.getTransformMatrix(
@@ -861,13 +860,12 @@ export class WebglScene {
         mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
         modelTransform
       );
-      this.gl.uniformMatrix4fv(this.uModelTransformLoc, false, modelTransform, 0, 0);
-      this.gl.uniform3fv(this.uLightDirectionLoc, this.lightDirection);
-      this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
-      // this.gl.drawArrays(this.gl.TRIANGLES, 0, 24);
+      this.gl.uniformMatrix4fv(this.locations.modelTransform, false, modelTransform, 0, 0);
+      this.gl.uniformMatrix4fv(this.locations.WVP, false, WVPm, 0, 0);
       this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
       this.gl.bindVertexArray(null);
     }
+    this.gl.uniform3fv(this.locations.lightPosition, this.camera.center);
     for (const cube of this.cubeList) {
       cube.rotation += cube.speedRotation;
       this.gl.bindVertexArray(cube.vao);
@@ -877,10 +875,8 @@ export class WebglScene {
         mat4.mul(mat4.create(), this.getProjectionMatrix(), this.getCameraViewMatrix()),
         modelTransform
       );
-      this.gl.uniformMatrix4fv(this.uModelTransformLoc, false, modelTransform, 0, 0);
-      this.gl.uniform3fv(this.uLightDirectionLoc, this.lightDirection);
-      this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
-      // this.gl.drawArrays(this.gl.TRIANGLES, 0, 24);
+      this.gl.uniformMatrix4fv(this.locations.modelTransform, false, modelTransform, 0, 0);
+      this.gl.uniformMatrix4fv(this.locations.WVP, false, WVPm, 0, 0);
       this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
       this.gl.bindVertexArray(null);
     }
