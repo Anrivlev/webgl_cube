@@ -15,11 +15,14 @@ const webglScene = new WebglScene(canvas, {
   fov: 90,
   near: 0.1,
   far: 100,
+}, {
+  zoom: 0.2,
+  minZoom: 0.2
 });
 webglScene.addShader(vertexShaderSource, 'vertex');
 webglScene.addShader(fragmentShaderSource, 'fragment');
 webglScene.linkAndUseProgram();
-// webglScene.addPlayer(0.1, 74);
+webglScene.addPlayer(0.1, 74);
 webglScene.addNCubedCubesAtOrigin(8, 1.5, 0.25);
 webglScene.enableControls();
 webglScene.startLoop();

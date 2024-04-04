@@ -46,7 +46,7 @@ export class WebglScene {
     this.cubeList = [];
     this.controlSettings = {
       mouseSensitivity: controlSettings?.mouseSensitivity ?? 0.25,
-      wheelSensitivity: controlSettings?.wheelSensitivity ?? 0.005,
+      wheelSensitivity: controlSettings?.wheelSensitivity ?? 0.001,
       moveSpeed: controlSettings?.moveSpeed ?? 0.04,
     };
 
@@ -58,7 +58,7 @@ export class WebglScene {
     this.program = program;
 
     this.gl.enable(this.gl.CULL_FACE);
-    this.gl.cullFace(this.gl.FRONT);
+    this.gl.cullFace(this.gl.BACK);
 
     this.gl.enable(this.gl.DEPTH_TEST);
     this.gl.depthFunc(this.gl.LEQUAL);
@@ -95,6 +95,7 @@ export class WebglScene {
 
   private getCubeBufferData(texId: number, color: vec3, alpha = 1.0): Float32Array {
     return new Float32Array([
+      // 0
       -0.5,
       -0.5,
       -0.5,
@@ -105,18 +106,7 @@ export class WebglScene {
       0.0,
       1.0,
       texId,
-      //
-      -0.5,
-      -0.5,
-      0.5,
-      color[0],
-      color[1],
-      color[2],
-      alpha,
-      1.0,
-      1.0,
-      texId,
-      //
+      // 1
       -0.5,
       0.5,
       -0.5,
@@ -127,40 +117,7 @@ export class WebglScene {
       0.0,
       0.0,
       texId,
-      //
-      -0.5,
-      0.5,
-      0.5,
-      color[0],
-      color[1],
-      color[2],
-      alpha,
-      1.0,
-      0.0,
-      texId,
-      //
-      0.5,
-      -0.5,
-      -0.5,
-      color[0],
-      color[1],
-      color[2],
-      alpha,
-      1.0,
-      1.0,
-      texId,
-      //
-      0.5,
-      -0.5,
-      0.5,
-      color[0],
-      color[1],
-      color[2],
-      alpha,
-      0.0,
-      1.0,
-      texId,
-      //
+      // 2
       0.5,
       0.5,
       -0.5,
@@ -171,7 +128,73 @@ export class WebglScene {
       1.0,
       0.0,
       texId,
-      //
+      // 3
+      0.5,
+      -0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      1.0,
+      texId,
+      // 4
+      0.5,
+      -0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      1.0,
+      texId,
+      // 5
+      0.5,
+      0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      0.0,
+      texId,
+      // 6
+      0.5,
+      0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      0.0,
+      texId,
+      // 7
+      0.5,
+      -0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      1.0,
+      texId,
+      // 8
+      0.5,
+      -0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      1.0,
+      texId,
+      // 9
       0.5,
       0.5,
       0.5,
@@ -182,36 +205,189 @@ export class WebglScene {
       0.0,
       0.0,
       texId,
-      //
+      // 10
+      -0.5,
+      0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      0.0,
+      texId,
+      // 11
+      -0.5,
+      -0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      1.0,
+      texId,
+      // 12
+      -0.5,
+      -0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      1.0,
+      texId,
+      // 13
+      -0.5,
+      0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      0.0,
+      texId,
+      // 14
+      -0.5,
+      0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      0.0,
+      texId,
+      // 15
+      -0.5,
+      -0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      1.0,
+      texId,
+      // 16
+      -0.5,
+      -0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      1.0,
+      texId,
+      // 17
+      -0.5,
+      -0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      0.0,
+      texId,
+      // 18
+      0.5,
+      -0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      0.0,
+      texId,
+      // 19
+      0.5,
+      -0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      1.0,
+      texId,
+      // 20
+      -0.5,
+      0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      1.0,
+      texId,
+      // 21
+      -0.5,
+      0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      0.0,
+      0.0,
+      texId,
+      // 22
+      0.5,
+      0.5,
+      0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      0.0,
+      texId,
+      // 23
+      0.5,
+      0.5,
+      -0.5,
+      color[0],
+      color[1],
+      color[2],
+      alpha,
+      1.0,
+      1.0,
+      texId,
     ]);
   }
 
   private getCubeIndicesData(): Uint8Array {
     return new Uint8Array([
-      // LEFT
-      1, 2, 3,
+      // FRONT
+      0, 1, 2,
       //
-      0, 2, 1,
-      // BOTTOM
-      0, 1, 4,
-      //
-      1, 5, 4,
-      // TOP
-      2, 6, 3,
-      //
-      3, 6, 7,
-      // BACK
-      3, 5, 1,
-      //
-      3, 7, 5,
+      0, 2, 3,
       // RIGHT
       4, 5, 6,
       //
-      5, 7, 6,
-      // FRONT
-      0, 4, 2,
+      4, 6, 7,
+      // BACK
+      8, 9, 10,
       //
-      2, 4, 6,
+      8, 10, 11,
+      // LEFT
+      12, 13, 14,
+      //
+      12, 14, 15,
+      // BOTTOM
+      16, 18, 17,
+      //
+      16, 19, 18,
+      // TOP
+      20, 21, 22,
+      //
+      20, 22, 23,
     ]);
   }
 
@@ -590,6 +766,7 @@ export class WebglScene {
         this.getTransformMatrix(this.player.size, this.player.position, this.player.rotation)
       );
       this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
+      // this.gl.drawArrays(this.gl.TRIANGLES, 0, 24);
       this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
       this.gl.bindVertexArray(null);
     }
@@ -602,7 +779,7 @@ export class WebglScene {
         this.getTransformMatrix(cube.size, cube.position, cube.rotation)
       );
       this.gl.uniformMatrix4fv(this.WVPLoc, false, WVPm, 0, 0);
-
+      // this.gl.drawArrays(this.gl.TRIANGLES, 0, 24);
       this.gl.drawElements(this.gl.TRIANGLES, 36, this.gl.UNSIGNED_BYTE, 0);
       this.gl.bindVertexArray(null);
     }
