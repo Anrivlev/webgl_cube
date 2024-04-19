@@ -45,7 +45,7 @@ export class WebglScene {
     this.updateCamera();
     this.lightDirection = lightDirection
       ? vec3.normalize(vec3.create(), lightDirection)
-      : vec3.normalize(vec3.create(), [0.2, 0.8, 0.2]);
+      : vec3.normalize(vec3.create(), [0.2, 0.3, 0.2]);
 
     this.cubeList = [];
     this.controlSettings = {
